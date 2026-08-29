@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dertet Harness</string>
+
+    <string name="new_chat">Жаңа чат</string>
+    <string name="chat_history">Чат тарихы</string>
+    <string name="no_chats_yet">Мұнда сіздің чаттарыңыз пайда болады</string>
+    <string name="settings">Баптаулар</string>
+    <string name="action_delete">Жою</string>
+
+    <string name="message_input_hint">Хабарлама жазыңыз…</string>
+    <string name="attach_desc">Файл қосу</string>
+    <string name="attach_camera">Камера</string>
+    <string name="attach_photo">Фото</string>
+    <string name="attach_file">Файл</string>
+    <string name="remove_attachment">Алып тастау</string>
+    <string name="send_desc">Жіберу</string>
+    <string name="stop_desc">Тоқтату</string>
+    <string name="menu_desc">Мәзір</string>
+
+    <string name="snackbar_no_key">Баптауларда API кілтін қосыңыз</string>
+    <string name="empty_chat_title">Не туралы сөйлесеміз?</string>
+    <string name="empty_chat_subtitle">Сөйлесуді бастау үшін баптауларда провайдерді таңдаңыз</string>
+
+    <string name="settings_provider">Провайдер</string>
+    <string name="settings_api_key">API кілті</string>
+    <string name="settings_api_key_hint">API кілтіңізді қойыңыз</string>
+    <string name="settings_model">Модель</string>
+    <string name="settings_model_hint">Мысалы: gpt-4o-mini</string>
+    <string name="settings_model_refresh_desc">Модельдер тізімін жаңарту</string>
+    <string name="settings_model_search_hint">Модельді іздеу…</string>
+    <string name="settings_model_use_custom">«%1$s» пайдалану</string>
+    <string name="settings_model_none_found">Ештеңе табылмады</string>
+    <string name="settings_system_prompt">Жүйелік промпт (міндетті емес)</string>
+    <string name="settings_system_prompt_hint">Мысалы: Қысқа әрі нақты жауап бер</string>
+    <string name="settings_save">Сақтау</string>
+    <string name="settings_saved">Сақталды ✓</string>
+    <string name="settings_language">Тіл</string>
+    <string name="settings_language_system">Жүйелік</string>
+
+    <string name="system_prompt_base">Сен — %1$s, %2$s компаниясының ЖИ моделісің, Android үшін Dertet Harness қолданбасының ішінде жұмыс істейсің. Бұл чат интерфейсі: пайдаланушы мәтін, фото, құжаттар немесе камерадан түсірген суреттер жібере алады, ал сенің жауабың ағынмен беріліп, кез келген сәтте тоқтатылуы мүмкін. Табиғи, қысқа әрі бейресми емес түрде, пайдаланушының тілінде жауап бер.</string>
+    <string name="stopped_response_placeholder">Сіз жауапты тоқтаттыңыз</string>
+
+    <string name="memory_title">Жады</string>
+    <string name="memory_row_subtitle">ЖИ сіз туралы нені біледі</string>
+    <string name="memory_empty">Мұнда ЖИ есте сақтаған немесе сіз өзіңіз қосқан деректер пайда болады</string>
+    <string name="memory_add_hint">Өзіңіз туралы жазыңыз…</string>
+    <string name="memory_add_button">Қосу</string>
+    <string name="memory_delete_desc">Жою</string>
+    <string name="memory_clear_all">Барлығын тазалау</string>
+    <string name="memory_clear_confirm">Барлық жады жазбаларын жою керек пе? Бұны қайтару мүмкін емес.</string>
+    <string name="memory_source_ai">ЖИ есте сақтады</string>
+    <string name="action_cancel">Бас тарту</string>
+
+    <string name="voice_input_desc">Дауыстық енгізу</string>
+    <string name="voice_input_unavailable">Бұл құрылғыда сөйлеуді тану қолжетімсіз</string>
+    <string name="action_copy">Көшіру</string>
+    <string name="action_edit">Өзгерту</string>
+    <string name="edit_mode_banner">Хабарламаны өзгерту</string>
+    <string name="edit_mode_cancel_desc">Өзгертуден бас тарту</string>
+    <string name="searching_indicator">Іздеу: %1$s</string>
+
+    <string name="image_viewer_close_desc">Жабу</string>
+    <string name="image_viewer_download_desc">Жүктеу</string>
+    <string name="image_viewer_load_failed">Суретті ашу мүмкін болмады</string>
+    <string name="image_viewer_saved">Галереяға сақталды</string>
+    <string name="image_viewer_save_failed">Сақтау мүмкін болмады</string>
+    <string name="image_viewer_permission_needed">Фотоны сақтау үшін рұқсат керек</string>
+</resources>

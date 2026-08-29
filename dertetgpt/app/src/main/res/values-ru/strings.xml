@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dertet Harness</string>
+
+    <string name="new_chat">Новый чат</string>
+    <string name="chat_history">История чатов</string>
+    <string name="no_chats_yet">Здесь появятся ваши чаты</string>
+    <string name="settings">Настройки</string>
+    <string name="action_delete">Удалить</string>
+
+    <string name="message_input_hint">Напишите сообщение…</string>
+    <string name="attach_desc">Добавить файл</string>
+    <string name="attach_camera">Камера</string>
+    <string name="attach_photo">Фото</string>
+    <string name="attach_file">Файл</string>
+    <string name="remove_attachment">Убрать</string>
+    <string name="send_desc">Отправить</string>
+    <string name="stop_desc">Остановить</string>
+    <string name="menu_desc">Меню</string>
+
+    <string name="snackbar_no_key">Добавьте API-ключ в настройках</string>
+    <string name="empty_chat_title">О чём поговорим?</string>
+    <string name="empty_chat_subtitle">Выберите провайдера в настройках и начните общение</string>
+
+    <string name="settings_provider">Провайдер</string>
+    <string name="settings_api_key">API-ключ</string>
+    <string name="settings_api_key_hint">Вставьте ваш API-ключ</string>
+    <string name="settings_model">Модель</string>
+    <string name="settings_model_hint">Например: gpt-4o-mini</string>
+    <string name="settings_model_refresh_desc">Обновить список моделей</string>
+    <string name="settings_model_search_hint">Поиск модели…</string>
+    <string name="settings_model_use_custom">Использовать «%1$s»</string>
+    <string name="settings_model_none_found">Ничего не найдено</string>
+    <string name="settings_system_prompt">Системный промпт (необязательно)</string>
+    <string name="settings_system_prompt_hint">Например: Отвечай коротко и по существу</string>
+    <string name="settings_save">Сохранить</string>
+    <string name="settings_saved">Сохранено ✓</string>
+    <string name="settings_language">Язык</string>
+    <string name="settings_language_system">Системный</string>
+
+    <string name="system_prompt_base">Ты — %1$s, ИИ-модель от %2$s, работающая внутри мобильного приложения Dertet Harness на Android. Это чат-интерфейс: пользователь пишет текстом, может присылать фото, документы или снимки с камеры, а твой ответ генерируется потоково и его можно прервать в любой момент. Отвечай естественно, по существу, без лишней формальности, на языке пользователя.</string>
+    <string name="stopped_response_placeholder">Вы прервали ответ</string>
+
+    <string name="memory_title">Память</string>
+    <string name="memory_row_subtitle">Что нейросеть знает о вас</string>
+    <string name="memory_empty">Здесь появятся факты, которые запомнит нейросеть, или которые вы добавите сами</string>
+    <string name="memory_add_hint">Напишите что-нибудь о себе…</string>
+    <string name="memory_add_button">Добавить</string>
+    <string name="memory_delete_desc">Удалить</string>
+    <string name="memory_clear_all">Очистить всё</string>
+    <string name="memory_clear_confirm">Удалить все записи памяти? Это нельзя отменить.</string>
+    <string name="memory_source_ai">Запомнила нейросеть</string>
+    <string name="action_cancel">Отмена</string>
+
+    <string name="voice_input_desc">Голосовой ввод</string>
+    <string name="voice_input_unavailable">Распознавание речи недоступно на этом устройстве</string>
+    <string name="action_copy">Копировать</string>
+    <string name="action_edit">Редактировать</string>
+    <string name="edit_mode_banner">Редактирование сообщения</string>
+    <string name="edit_mode_cancel_desc">Отменить редактирование</string>
+    <string name="searching_indicator">Поиск: %1$s</string>
+
+    <string name="image_viewer_close_desc">Закрыть</string>
+    <string name="image_viewer_download_desc">Скачать</string>
+    <string name="image_viewer_load_failed">Не удалось открыть изображение</string>
+    <string name="image_viewer_saved">Сохранено в галерею</string>
+    <string name="image_viewer_save_failed">Не удалось сохранить</string>
+    <string name="image_viewer_permission_needed">Нужно разрешение, чтобы сохранить фото</string>
+</resources>

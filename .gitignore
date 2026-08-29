@@ -1,0 +1,32 @@
+# Local toolchain installs — not part of the project, huge, machine-specific
+/android-sdk/
+/gradle-8.9/
+/gradle-8.9-bin.zip
+/sdk-downloads/
+/DertetGPT-iOS-source.zip
+
+# --- Desktop (dertetgpt-desktop) ---
+dertetgpt-desktop/node_modules/
+dertetgpt-desktop/dist/
+dertetgpt-desktop/release/win-unpacked/
+dertetgpt-desktop/release/*.blockmap
+dertetgpt-desktop/release/builder-debug.yml
+
+# --- Android (dertetgpt) ---
+dertetgpt/.gradle/
+dertetgpt/app/build/
+dertetgpt/build/
+dertetgpt/local.properties
+dertetgpt/keystore/
+dertetgpt/keystore.properties
+dertetgpt/.kotlin/
+dertetgpt/tools/__pycache__/
+
+# --- iOS (dertetgpt-ios) ---
+dertetgpt-ios/**/xcuserdata/
+dertetgpt-ios/**/.DS_Store
+
+# General
+*.log
+.DS_Store
+Thumbs.db

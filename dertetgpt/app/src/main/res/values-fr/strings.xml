@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dertet Harness</string>
+
+    <string name="new_chat">Nouvelle discussion</string>
+    <string name="chat_history">Historique des discussions</string>
+    <string name="no_chats_yet">Vos discussions apparaîtront ici</string>
+    <string name="settings">Paramètres</string>
+    <string name="action_delete">Supprimer</string>
+
+    <string name="message_input_hint">Écrivez un message…</string>
+    <string name="attach_desc">Joindre un fichier</string>
+    <string name="attach_camera">Appareil photo</string>
+    <string name="attach_photo">Photo</string>
+    <string name="attach_file">Fichier</string>
+    <string name="remove_attachment">Retirer</string>
+    <string name="send_desc">Envoyer</string>
+    <string name="stop_desc">Arrêter</string>
+    <string name="menu_desc">Menu</string>
+
+    <string name="snackbar_no_key">Ajoutez une clé API dans les paramètres</string>
+    <string name="empty_chat_title">De quoi parlons-nous ?</string>
+    <string name="empty_chat_subtitle">Choisissez un fournisseur dans les paramètres pour commencer</string>
+
+    <string name="settings_provider">Fournisseur</string>
+    <string name="settings_api_key">Clé API</string>
+    <string name="settings_api_key_hint">Collez votre clé API</string>
+    <string name="settings_model">Modèle</string>
+    <string name="settings_model_hint">Ex. : gpt-4o-mini</string>
+    <string name="settings_model_refresh_desc">Actualiser la liste des modèles</string>
+    <string name="settings_model_search_hint">Rechercher un modèle…</string>
+    <string name="settings_model_use_custom">Utiliser « %1$s »</string>
+    <string name="settings_model_none_found">Aucun résultat</string>
+    <string name="settings_system_prompt">Prompt système (facultatif)</string>
+    <string name="settings_system_prompt_hint">Ex. : Réponds brièvement et avec précision</string>
+    <string name="settings_save">Enregistrer</string>
+    <string name="settings_saved">Enregistré ✓</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_system">Système</string>
+
+    <string name="system_prompt_base">Tu es %1$s, un modèle d\'IA de %2$s, exécuté dans l\'application Android Dertet Harness. C\'est une interface de chat : l\'utilisateur peut envoyer du texte, des photos, des documents ou des prises de vue de l\'appareil photo, et ta réponse s\'affiche en flux et peut être interrompue à tout moment. Réponds naturellement, de façon concise et sans formalité excessive, dans la langue de l\'utilisateur.</string>
+    <string name="stopped_response_placeholder">Tu as interrompu la réponse</string>
+
+    <string name="memory_title">Mémoire</string>
+    <string name="memory_row_subtitle">Ce que l\'IA sait de toi</string>
+    <string name="memory_empty">Les faits retenus par l\'IA, ou ceux que tu ajoutes toi-même, apparaîtront ici</string>
+    <string name="memory_add_hint">Écris quelque chose sur toi…</string>
+    <string name="memory_add_button">Ajouter</string>
+    <string name="memory_delete_desc">Supprimer</string>
+    <string name="memory_clear_all">Tout effacer</string>
+    <string name="memory_clear_confirm">Supprimer toutes les entrées de mémoire ? C\'est irréversible.</string>
+    <string name="memory_source_ai">Retenu par l\'IA</string>
+    <string name="action_cancel">Annuler</string>
+
+    <string name="voice_input_desc">Saisie vocale</string>
+    <string name="voice_input_unavailable">La reconnaissance vocale n\'est pas disponible sur cet appareil</string>
+    <string name="action_copy">Copier</string>
+    <string name="action_edit">Modifier</string>
+    <string name="edit_mode_banner">Modification du message</string>
+    <string name="edit_mode_cancel_desc">Annuler la modification</string>
+    <string name="searching_indicator">Recherche : %1$s</string>
+
+    <string name="image_viewer_close_desc">Fermer</string>
+    <string name="image_viewer_download_desc">Télécharger</string>
+    <string name="image_viewer_load_failed">Impossible d\'ouvrir l\'image</string>
+    <string name="image_viewer_saved">Enregistré dans la galerie</string>
+    <string name="image_viewer_save_failed">Échec de l\'enregistrement</string>
+    <string name="image_viewer_permission_needed">Autorisation requise pour enregistrer la photo</string>
+</resources>

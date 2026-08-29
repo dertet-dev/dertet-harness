@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dertet Harness</string>
+
+    <string name="new_chat">Chat nou</string>
+    <string name="chat_history">Istoric chat</string>
+    <string name="no_chats_yet">Aici vor apărea conversațiile tale</string>
+    <string name="settings">Setări</string>
+    <string name="action_delete">Șterge</string>
+
+    <string name="message_input_hint">Scrie un mesaj…</string>
+    <string name="attach_desc">Atașează fișier</string>
+    <string name="attach_camera">Cameră</string>
+    <string name="attach_photo">Fotografie</string>
+    <string name="attach_file">Fișier</string>
+    <string name="remove_attachment">Elimină</string>
+    <string name="send_desc">Trimite</string>
+    <string name="stop_desc">Oprește</string>
+    <string name="menu_desc">Meniu</string>
+
+    <string name="snackbar_no_key">Adaugă o cheie API în setări</string>
+    <string name="empty_chat_title">Despre ce vorbim?</string>
+    <string name="empty_chat_subtitle">Alege un furnizor din setări pentru a începe</string>
+
+    <string name="settings_provider">Furnizor</string>
+    <string name="settings_api_key">Cheie API</string>
+    <string name="settings_api_key_hint">Lipește cheia ta API</string>
+    <string name="settings_model">Model</string>
+    <string name="settings_model_hint">Ex.: gpt-4o-mini</string>
+    <string name="settings_model_refresh_desc">Actualizează lista de modele</string>
+    <string name="settings_model_search_hint">Caută un model…</string>
+    <string name="settings_model_use_custom">Folosește „%1$s”</string>
+    <string name="settings_model_none_found">Niciun rezultat</string>
+    <string name="settings_system_prompt">Prompt de sistem (opțional)</string>
+    <string name="settings_system_prompt_hint">Ex.: Răspunde scurt și la obiect</string>
+    <string name="settings_save">Salvează</string>
+    <string name="settings_saved">Salvat ✓</string>
+    <string name="settings_language">Limbă</string>
+    <string name="settings_language_system">Sistem</string>
+
+    <string name="system_prompt_base">Ești %1$s, un model AI de la %2$s, care rulează în aplicația Android Dertet Harness. Este o interfață de chat: utilizatorul poate trimite text, fotografii, documente sau poze făcute cu camera, iar răspunsul tău este transmis în flux și poate fi oprit oricând. Răspunde natural, concis și fără formalitate excesivă, în limba utilizatorului.</string>
+    <string name="stopped_response_placeholder">Ai întrerupt răspunsul</string>
+
+    <string name="memory_title">Memorie</string>
+    <string name="memory_row_subtitle">Ce știe AI despre tine</string>
+    <string name="memory_empty">Aici vor apărea faptele reținute de AI sau cele adăugate de tine</string>
+    <string name="memory_add_hint">Scrie ceva despre tine…</string>
+    <string name="memory_add_button">Adaugă</string>
+    <string name="memory_delete_desc">Șterge</string>
+    <string name="memory_clear_all">Șterge tot</string>
+    <string name="memory_clear_confirm">Ștergi toate înregistrările din memorie? Nu poate fi anulat.</string>
+    <string name="memory_source_ai">Reținut de AI</string>
+    <string name="action_cancel">Anulează</string>
+
+    <string name="voice_input_desc">Introducere vocală</string>
+    <string name="voice_input_unavailable">Recunoașterea vocală nu este disponibilă pe acest dispozitiv</string>
+    <string name="action_copy">Copiază</string>
+    <string name="action_edit">Editează</string>
+    <string name="edit_mode_banner">Editare mesaj</string>
+    <string name="edit_mode_cancel_desc">Anulează editarea</string>
+    <string name="searching_indicator">Caut: %1$s</string>
+
+    <string name="image_viewer_close_desc">Închide</string>
+    <string name="image_viewer_download_desc">Descarcă</string>
+    <string name="image_viewer_load_failed">Imaginea nu a putut fi deschisă</string>
+    <string name="image_viewer_saved">Salvat în galerie</string>
+    <string name="image_viewer_save_failed">Nu s-a putut salva</string>
+    <string name="image_viewer_permission_needed">Este necesară permisiunea pentru a salva fotografia</string>
+</resources>

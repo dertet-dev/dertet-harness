@@ -1,0 +1,75 @@
+{
+  "name": "dertet-harness-desktop",
+  "version": "1.0.0",
+  "description": "Dertet Harness for Windows — multi-provider AI chat client + Dertet Code agent harness",
+  "main": "dist/electron/main.js",
+  "author": "Dertet",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "build:main": "esbuild electron/main.ts electron/preload.ts --bundle --platform=node --target=node20 --format=cjs --outdir=dist/electron --external:electron",
+    "build:renderer": "esbuild src/index.tsx --bundle --platform=browser --target=chrome120 --format=iife --outfile=dist/renderer/bundle.js --loader:.png=dataurl",
+    "copy:assets": "node scripts/copy-assets.js",
+    "build": "npm run build:main && npm run build:renderer && npm run copy:assets",
+    "dist": "npm run build && electron-builder --win",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "diff": "^5.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/diff": "^5.2.1",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.5.2"
+  },
+  "build": {
+    "appId": "com.dertet.harness.desktop",
+    "productName": "Dertet Harness",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build-resources/icon.ico"
+    },
+    "nsis": {
+      "warningsAsErrors": false,
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Dertet Harness",
+      "artifactName": "DertetHarness-Setup.exe",
+      "include": "build-resources/installer.nsh"
+    }
+  },
+  "allowScripts": {
+    "electron@31.7.7": true,
+    "esbuild@0.21.5": true
+  }
+}

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dertet Harness</string>
+
+    <string name="new_chat">Nowy czat</string>
+    <string name="chat_history">Historia czatów</string>
+    <string name="no_chats_yet">Tutaj pojawią się Twoje czaty</string>
+    <string name="settings">Ustawienia</string>
+    <string name="action_delete">Usuń</string>
+
+    <string name="message_input_hint">Napisz wiadomość…</string>
+    <string name="attach_desc">Dodaj plik</string>
+    <string name="attach_camera">Aparat</string>
+    <string name="attach_photo">Zdjęcie</string>
+    <string name="attach_file">Plik</string>
+    <string name="remove_attachment">Usuń</string>
+    <string name="send_desc">Wyślij</string>
+    <string name="stop_desc">Zatrzymaj</string>
+    <string name="menu_desc">Menu</string>
+
+    <string name="snackbar_no_key">Dodaj klucz API w ustawieniach</string>
+    <string name="empty_chat_title">O czym porozmawiamy?</string>
+    <string name="empty_chat_subtitle">Wybierz dostawcę w ustawieniach, aby zacząć rozmowę</string>
+
+    <string name="settings_provider">Dostawca</string>
+    <string name="settings_api_key">Klucz API</string>
+    <string name="settings_api_key_hint">Wklej swój klucz API</string>
+    <string name="settings_model">Model</string>
+    <string name="settings_model_hint">Np.: gpt-4o-mini</string>
+    <string name="settings_model_refresh_desc">Odśwież listę modeli</string>
+    <string name="settings_model_search_hint">Szukaj modelu…</string>
+    <string name="settings_model_use_custom">Użyj „%1$s”</string>
+    <string name="settings_model_none_found">Nic nie znaleziono</string>
+    <string name="settings_system_prompt">Prompt systemowy (opcjonalnie)</string>
+    <string name="settings_system_prompt_hint">Np.: Odpowiadaj krótko i na temat</string>
+    <string name="settings_save">Zapisz</string>
+    <string name="settings_saved">Zapisano ✓</string>
+    <string name="settings_language">Język</string>
+    <string name="settings_language_system">Systemowy</string>
+
+    <string name="system_prompt_base">Jesteś %1$s, modelem AI od %2$s, działającym w aplikacji Dertet Harness na Androida. To interfejs czatu: użytkownik może wysyłać tekst, zdjęcia, dokumenty lub zdjęcia z aparatu, a Twoja odpowiedź jest strumieniowana i można ją przerwać w dowolnym momencie. Odpowiadaj naturalnie, zwięźle i bez zbędnej formalności, w języku użytkownika.</string>
+    <string name="stopped_response_placeholder">Przerwałeś odpowiedź</string>
+
+    <string name="memory_title">Pamięć</string>
+    <string name="memory_row_subtitle">Co AI wie o Tobie</string>
+    <string name="memory_empty">Tutaj pojawią się fakty zapamiętane przez AI lub dodane przez Ciebie</string>
+    <string name="memory_add_hint">Napisz coś o sobie…</string>
+    <string name="memory_add_button">Dodaj</string>
+    <string name="memory_delete_desc">Usuń</string>
+    <string name="memory_clear_all">Wyczyść wszystko</string>
+    <string name="memory_clear_confirm">Usunąć wszystkie wpisy pamięci? Tej operacji nie można cofnąć.</string>
+    <string name="memory_source_ai">Zapamiętane przez AI</string>
+    <string name="action_cancel">Anuluj</string>
+
+    <string name="voice_input_desc">Wprowadzanie głosowe</string>
+    <string name="voice_input_unavailable">Rozpoznawanie mowy jest niedostępne na tym urządzeniu</string>
+    <string name="action_copy">Kopiuj</string>
+    <string name="action_edit">Edytuj</string>
+    <string name="edit_mode_banner">Edytowanie wiadomości</string>
+    <string name="edit_mode_cancel_desc">Anuluj edycję</string>
+    <string name="searching_indicator">Szukam: %1$s</string>
+
+    <string name="image_viewer_close_desc">Zamknij</string>
+    <string name="image_viewer_download_desc">Pobierz</string>
+    <string name="image_viewer_load_failed">Nie udało się otworzyć obrazu</string>
+    <string name="image_viewer_saved">Zapisano w galerii</string>
+    <string name="image_viewer_save_failed">Nie udało się zapisać</string>
+    <string name="image_viewer_permission_needed">Potrzebne uprawnienie, aby zapisać zdjęcie</string>
+</resources>

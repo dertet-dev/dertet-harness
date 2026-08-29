@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dertet Harness</string>
+
+    <string name="new_chat">Neuer Chat</string>
+    <string name="chat_history">Chatverlauf</string>
+    <string name="no_chats_yet">Hier erscheinen deine Chats</string>
+    <string name="settings">Einstellungen</string>
+    <string name="action_delete">Löschen</string>
+
+    <string name="message_input_hint">Nachricht schreiben…</string>
+    <string name="attach_desc">Datei anhängen</string>
+    <string name="attach_camera">Kamera</string>
+    <string name="attach_photo">Foto</string>
+    <string name="attach_file">Datei</string>
+    <string name="remove_attachment">Entfernen</string>
+    <string name="send_desc">Senden</string>
+    <string name="stop_desc">Stoppen</string>
+    <string name="menu_desc">Menü</string>
+
+    <string name="snackbar_no_key">Füge in den Einstellungen einen API-Schlüssel hinzu</string>
+    <string name="empty_chat_title">Worüber sprechen wir?</string>
+    <string name="empty_chat_subtitle">Wähle einen Anbieter in den Einstellungen, um zu beginnen</string>
+
+    <string name="settings_provider">Anbieter</string>
+    <string name="settings_api_key">API-Schlüssel</string>
+    <string name="settings_api_key_hint">Füge deinen API-Schlüssel ein</string>
+    <string name="settings_model">Modell</string>
+    <string name="settings_model_hint">Z. B.: gpt-4o-mini</string>
+    <string name="settings_model_refresh_desc">Modellliste aktualisieren</string>
+    <string name="settings_model_search_hint">Modell suchen…</string>
+    <string name="settings_model_use_custom">„%1$s“ verwenden</string>
+    <string name="settings_model_none_found">Nichts gefunden</string>
+    <string name="settings_system_prompt">System-Prompt (optional)</string>
+    <string name="settings_system_prompt_hint">Z. B.: Antworte kurz und präzise</string>
+    <string name="settings_save">Speichern</string>
+    <string name="settings_saved">Gespeichert ✓</string>
+    <string name="settings_language">Sprache</string>
+    <string name="settings_language_system">System</string>
+
+    <string name="system_prompt_base">Du bist %1$s, ein KI-Modell von %2$s, das in der Android-App Dertet Harness läuft. Es ist eine Chat-Oberfläche: Der Nutzer kann Text, Fotos, Dokumente oder Kamerabilder senden, und deine Antwort wird gestreamt und kann jederzeit gestoppt werden. Antworte natürlich, prägnant und ohne unnötige Förmlichkeit, in der Sprache des Nutzers.</string>
+    <string name="stopped_response_placeholder">Du hast die Antwort unterbrochen</string>
+
+    <string name="memory_title">Erinnerung</string>
+    <string name="memory_row_subtitle">Was die KI über dich weiß</string>
+    <string name="memory_empty">Hier erscheinen Fakten, die sich die KI merkt, oder die du selbst hinzufügst</string>
+    <string name="memory_add_hint">Schreib etwas über dich…</string>
+    <string name="memory_add_button">Hinzufügen</string>
+    <string name="memory_delete_desc">Löschen</string>
+    <string name="memory_clear_all">Alles löschen</string>
+    <string name="memory_clear_confirm">Alle Erinnerungseinträge löschen? Das kann nicht rückgängig gemacht werden.</string>
+    <string name="memory_source_ai">Von der KI gemerkt</string>
+    <string name="action_cancel">Abbrechen</string>
+
+    <string name="voice_input_desc">Spracheingabe</string>
+    <string name="voice_input_unavailable">Spracherkennung ist auf diesem Gerät nicht verfügbar</string>
+    <string name="action_copy">Kopieren</string>
+    <string name="action_edit">Bearbeiten</string>
+    <string name="edit_mode_banner">Nachricht wird bearbeitet</string>
+    <string name="edit_mode_cancel_desc">Bearbeitung abbrechen</string>
+    <string name="searching_indicator">Suche: %1$s</string>
+
+    <string name="image_viewer_close_desc">Schließen</string>
+    <string name="image_viewer_download_desc">Herunterladen</string>
+    <string name="image_viewer_load_failed">Bild konnte nicht geöffnet werden</string>
+    <string name="image_viewer_saved">In der Galerie gespeichert</string>
+    <string name="image_viewer_save_failed">Speichern fehlgeschlagen</string>
+    <string name="image_viewer_permission_needed">Berechtigung erforderlich, um das Foto zu speichern</string>
+</resources>

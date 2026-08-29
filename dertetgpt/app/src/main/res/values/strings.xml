@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dertet Harness</string>
+
+    <string name="new_chat">Новий чат</string>
+    <string name="chat_history">Історія чатів</string>
+    <string name="no_chats_yet">Тут з’являться ваші чати</string>
+    <string name="settings">Налаштування</string>
+    <string name="action_delete">Видалити</string>
+
+    <string name="message_input_hint">Напишіть повідомлення…</string>
+    <string name="attach_desc">Додати файл</string>
+    <string name="attach_camera">Камера</string>
+    <string name="attach_photo">Фото</string>
+    <string name="attach_file">Файл</string>
+    <string name="remove_attachment">Прибрати</string>
+    <string name="send_desc">Надіслати</string>
+    <string name="stop_desc">Зупинити</string>
+    <string name="menu_desc">Меню</string>
+
+    <string name="snackbar_no_key">Додайте API ключ у налаштуваннях</string>
+    <string name="empty_chat_title">Про що поговоримо?</string>
+    <string name="empty_chat_subtitle">Оберіть провайдера в налаштуваннях і почніть спілкування</string>
+
+    <string name="settings_provider">Провайдер</string>
+    <string name="settings_api_key">API ключ</string>
+    <string name="settings_api_key_hint">Вставте ваш API ключ</string>
+    <string name="settings_model">Модель</string>
+    <string name="settings_model_hint">Наприклад: gpt-4o-mini</string>
+    <string name="settings_model_refresh_desc">Оновити список моделей</string>
+    <string name="settings_model_search_hint">Пошук моделі…</string>
+    <string name="settings_model_use_custom">Використати «%1$s»</string>
+    <string name="settings_model_none_found">Нічого не знайдено</string>
+    <string name="settings_system_prompt">Системний промпт (необов’язково)</string>
+    <string name="settings_system_prompt_hint">Наприклад: Відповідай коротко і по суті</string>
+    <string name="settings_save">Зберегти</string>
+    <string name="settings_saved">Збережено ✓</string>
+    <string name="settings_language">Мова</string>
+    <string name="settings_language_system">Системна</string>
+
+    <string name="system_prompt_base">Ти — %1$s, ШІ-модель від %2$s, що працює всередині мобільного застосунку Dertet Harness на Android. Це чат-інтерфейс: користувач спілкується текстом, може надсилати фото, документи чи знімки з камери, а твоя відповідь генерується потоково і її можна перервати в будь-який момент. Відповідай природно, по суті, без зайвої формальності, мовою користувача.</string>
+    <string name="stopped_response_placeholder">Ви перервали відповідь</string>
+
+    <string name="memory_title">Пам’ять</string>
+    <string name="memory_row_subtitle">Що знає нейромережа про вас</string>
+    <string name="memory_empty">Тут з’являться факти, які запам’ятає нейромережа, або які ви додасте самі</string>
+    <string name="memory_add_hint">Напишіть щось про себе…</string>
+    <string name="memory_add_button">Додати</string>
+    <string name="memory_delete_desc">Видалити</string>
+    <string name="memory_clear_all">Очистити все</string>
+    <string name="memory_clear_confirm">Видалити всі записи пам’яті? Це не можна скасувати.</string>
+    <string name="memory_source_ai">Запам’ятала нейромережа</string>
+    <string name="action_cancel">Скасувати</string>
+
+    <string name="voice_input_desc">Голосове введення</string>
+    <string name="voice_input_unavailable">Розпізнавання мовлення недоступне на цьому пристрої</string>
+    <string name="action_copy">Копіювати</string>
+    <string name="action_edit">Редагувати</string>
+    <string name="edit_mode_banner">Редагування повідомлення</string>
+    <string name="edit_mode_cancel_desc">Скасувати редагування</string>
+    <string name="searching_indicator">Пошук: %1$s</string>
+
+    <string name="image_viewer_close_desc">Закрити</string>
+    <string name="image_viewer_download_desc">Завантажити</string>
+    <string name="image_viewer_load_failed">Не вдалося відкрити зображення</string>
+    <string name="image_viewer_saved">Збережено в галерею</string>
+    <string name="image_viewer_save_failed">Не вдалося зберегти</string>
+    <string name="image_viewer_permission_needed">Потрібен дозвіл, щоб зберегти фото</string>
+</resources>
