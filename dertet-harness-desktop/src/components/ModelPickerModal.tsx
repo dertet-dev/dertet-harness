@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useI18n } from "../i18n";
 
 interface ModelPickerModalProps {
   providerName: string;
@@ -11,6 +12,7 @@ interface ModelPickerModalProps {
 }
 
 export function ModelPickerModal({ providerName, models, loading, currentValue, onSelect, onRefresh, onClose }: ModelPickerModalProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -23,9 +25,9 @@ export function ModelPickerModal({ providerName, models, loading, currentValue, 
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-panel model-picker" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <div className="modal-title">Модель · {providerName}</div>
+          <div className="modal-title">{t("model")} · {providerName}</div>
           <button className="btn btn-secondary" onClick={onRefresh} disabled={loading}>
-            {loading ? "…" : "Оновити список"}
+            {loading ? "…" : t("refresh")}
           </button>
         </div>
         <input
@@ -33,11 +35,11 @@ export function ModelPickerModal({ providerName, models, loading, currentValue, 
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={`Пошук серед ${models.length} моделей…`}
+          placeholder={t("model_picker_search_placeholder", String(models.length))}
         />
-        <div className="model-picker-count">{filtered.length} із {models.length} моделей</div>
+        <div className="model-picker-count">{t("model_picker_count", String(filtered.length), String(models.length))}</div>
         <div className="model-picker-list">
-          {filtered.length === 0 && !loading && <div className="sidebar-empty">Нічого не знайдено</div>}
+          {filtered.length === 0 && !loading && <div className="sidebar-empty">{t("model_picker_none_found")}</div>}
           {filtered.map((m) => (
             <div
               key={m}
@@ -53,7 +55,7 @@ export function ModelPickerModal({ providerName, models, loading, currentValue, 
         </div>
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={onClose}>
-            Закрити
+            {t("cancel")}
           </button>
         </div>
       </div>

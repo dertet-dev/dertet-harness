@@ -16,6 +16,7 @@ import {
 import { clientForStyle, LlmClient, LlmMessage, LlmStreamEvent } from "./llmClients";
 import { PROVIDERS } from "./providers";
 import { buildSystemPrompt } from "./systemPrompt";
+import { at } from "./agentI18n";
 import { TOOL_DEFINITIONS, READ_ONLY_TOOLS, COMPUTER_USE_TOOLS } from "./tools/definitions";
 import { executeTool } from "./tools/executor";
 import { readDertetCodeMd } from "./tools/dertetCodeMd";
@@ -129,34 +130,38 @@ function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
-const TOOL_ACTIVITY_LABELS: Record<string, (args: Record<string, unknown>) => string> = {
-  web_search: (a) => `Шукаю «${String(a.query ?? "")}»…`,
-  web_fetch: (a) => `Відкриваю ${String(a.url ?? "сторінку")}…`,
-  browser_open: (a) => `Відкриваю ${String(a.url ?? "сторінку")}…`,
-  browser_read: () => "Читаю сторінку…",
-  browser_find: (a) => `Шукаю на сторінці «${String(a.query ?? "")}»…`,
-  browser_click: () => "Клікаю на сторінці…",
-  browser_type: () => "Вводжу текст на сторінці…",
-  browser_screenshot: () => "Роблю скріншот сторінки…",
-  browser_close: () => "Закриваю вкладку браузера…",
-  read_file: (a) => `Читаю ${String(a.path ?? "файл")}…`,
-  list_dir: (a) => `Переглядаю ${String(a.path ?? "папку")}…`,
-  write_file: (a) => `Записую ${String(a.path ?? "файл")}…`,
-  edit_file: (a) => `Редагую ${String(a.path ?? "файл")}…`,
-  run_command: () => "Виконую команду…",
-  update_dertetcode_md: () => "Оновлюю DertetCode.md…",
-  ask_user_choice: () => "Питаю користувача…",
-  video_probe: (a) => `Перевіряю відео ${String(a.path ?? "")}…`,
-  video_add_audio: () => "Додаю аудіо до відео…",
-  video_trim: () => "Обрізаю відео…",
-  video_concat: () => "Склеюю відео…",
-  video_from_images: () => "Збираю відео з зображень…"
+const TOOL_ACTIVITY_LABELS: Record<string, (lang: string | undefined, args: Record<string, unknown>) => string> = {
+  web_search: (l, a) => at(l, "activity_search", String(a.query ?? "")),
+  web_fetch: (l, a) => at(l, "activity_open", String(a.url ?? "")),
+  browser_open: (l, a) => at(l, "activity_open", String(a.url ?? "")),
+  browser_read: (l) => at(l, "activity_browser_read"),
+  browser_find: (l, a) => at(l, "activity_browser_find", String(a.query ?? "")),
+  browser_click: (l) => at(l, "activity_browser_click"),
+  browser_type: (l) => at(l, "activity_browser_type"),
+  browser_screenshot: (l) => at(l, "activity_browser_screenshot"),
+  browser_close: (l) => at(l, "activity_browser_close"),
+  read_file: (l, a) => at(l, "activity_read_file", String(a.path ?? "")),
+  list_dir: (l, a) => at(l, "activity_list_dir", String(a.path ?? "")),
+  write_file: (l, a) => at(l, "activity_write_file", String(a.path ?? "")),
+  edit_file: (l, a) => at(l, "activity_edit_file", String(a.path ?? "")),
+  run_command: (l) => at(l, "activity_run_command"),
+  update_dertetcode_md: (l) => at(l, "activity_update_dertetcode_md"),
+  ask_user_choice: (l) => at(l, "activity_ask_user_choice"),
+  video_probe: (l, a) => at(l, "activity_video_probe", String(a.path ?? "")),
+  video_add_audio: (l) => at(l, "activity_video_add_audio"),
+  video_trim: (l) => at(l, "activity_video_trim"),
+  video_concat: (l) => at(l, "activity_video_concat"),
+  video_from_images: (l) => at(l, "activity_video_from_images")
 };
 
-function activityForToolCall(call: ToolCallRecord, visitedPages: { url: string; title?: string }[]): AgentActivity {
+function activityForToolCall(
+  call: ToolCallRecord,
+  visitedPages: { url: string; title?: string }[],
+  lang: string | undefined
+): AgentActivity {
   const args = call.args ?? {};
   if (call.toolName.startsWith("computer_")) {
-    return { kind: "tool", label: "Керую екраном…", detailKind: "none" };
+    return { kind: "tool", label: at(lang, "activity_computer_use"), detailKind: "none" };
   }
   const isBrowsing = call.toolName === "web_search" || call.toolName === "web_fetch" || call.toolName.startsWith("browser_");
   if (isBrowsing) {
@@ -165,12 +170,12 @@ function activityForToolCall(call: ToolCallRecord, visitedPages: { url: string; 
     } else if (args.url) {
       visitedPages.push({ url: String(args.url) });
     }
-    const label = TOOL_ACTIVITY_LABELS[call.toolName]?.(args) ?? `Виконую ${call.toolName}…`;
+    const label = TOOL_ACTIVITY_LABELS[call.toolName]?.(lang, args) ?? at(lang, "activity_generic", call.toolName);
     return visitedPages.length
       ? { kind: "browsing", label, detailKind: "urls", detailUrls: visitedPages.slice() }
       : { kind: "browsing", label, detailKind: "none" };
   }
-  const label = TOOL_ACTIVITY_LABELS[call.toolName]?.(args) ?? `Виконую ${call.toolName}…`;
+  const label = TOOL_ACTIVITY_LABELS[call.toolName]?.(lang, args) ?? at(lang, "activity_generic", call.toolName);
   return { kind: "tool", label, detailKind: "none" };
 }
 
@@ -333,6 +338,7 @@ async function handleSlashCommand(
   const cmd = trimmed.split(/\s+/)[0]?.toLowerCase();
   if (!cmd || !SLASH_COMMANDS.includes(cmd)) return false;
   const argText = trimmed.slice(cmd.length).trim();
+  const lang = settings.language;
 
   const userMsg = newMessage(sessionId, "user", trimmed);
   await store.appendMessage(sessionId, userMsg);
@@ -345,36 +351,13 @@ async function handleSlashCommand(
     case "/help":
     case "/commands":
     case "/?":
-      responseText =
-        "Доступні команди:\n" +
-        "/help, /commands — цей список\n" +
-        "/status, /tokens — оцінка токенів + серія використання\n" +
-        "/clear, /reset — очистити історію цього чату\n" +
-        "/compact — стиснути історію в короткий підсумок\n" +
-        "/model, /provider — поточний провайдер і модель\n" +
-        "/memory — показати, що агент запам'ятав про тебе\n" +
-        "/remember <текст> — вручну додати факт у пам'ять\n" +
-        "/forget — стерти всю пам'ять про тебе\n" +
-        "/lessons — показати вивчені уроки з минулих помилок\n" +
-        "/forget-lessons — стерти уроки\n" +
-        "/folders, /pwd — прикріплені папки проєкту\n" +
-        "/mode — поточний режим (default/plan/auto)\n" +
-        "/plan, /auto, /default — перемкнути режим\n" +
-        "/rename <текст> — перейменувати цю сесію\n" +
-        "/system — показати кастомний системний промпт із налаштувань\n" +
-        "/whoami — зведення про цю сесію (модель, режим, папки)\n" +
-        "/export — зберегти цей чат у .md файл\n" +
-        "/history — історія інших сесій у цій самій папці проєкту\n" +
-        "/doctor — перевірка стану (ключ, папки, файли)\n" +
-        "/version — версія застосунку\n" +
-        "/bug — як повідомити про баг\n" +
-        "/plsfix [текст] — агент одразу глибоко досліджує й фіксить, без уточнюючих питань";
+      responseText = at(lang, "slash_help");
       break;
 
     case "/model":
     case "/provider": {
       const provider = PROVIDERS[apiKey.providerId];
-      responseText = `Провайдер: ${provider?.displayName ?? apiKey.providerId}\nМодель: ${apiKey.model}`;
+      responseText = at(lang, "slash_model", provider?.displayName ?? apiKey.providerId, apiKey.model);
       break;
     }
 
@@ -382,25 +365,27 @@ async function handleSlashCommand(
     case "/tokens": {
       const streak = await store.loadStreak();
       const usage = session.usage ?? { inputTokens: 0, outputTokens: 0 };
-      responseText =
-        `Оцінка вхідних токенів у цьому чаті: ~${usage.inputTokens.toLocaleString("uk-UA")}\n` +
-        `Оцінка вихідних токенів у цьому чаті: ~${usage.outputTokens.toLocaleString("uk-UA")}\n` +
-        `Серія використання Dertet Code: ${streak.streakDays} дн. поспіль\n` +
-        `(оцінка токенів приблизна, не точний підрахунок провайдера)`;
+      responseText = at(
+        lang,
+        "slash_status",
+        usage.inputTokens.toLocaleString(),
+        usage.outputTokens.toLocaleString(),
+        String(streak.streakDays)
+      );
       break;
     }
 
     case "/clear":
     case "/reset": {
       await store.saveMessages(sessionId, []);
-      responseText = "Історію цього чату очищено.";
+      responseText = at(lang, "slash_clear_done");
       break;
     }
 
     case "/compact": {
       const history = (await store.loadMessages(sessionId)).flatMap(toLlmMessages);
       if (history.length === 0) {
-        responseText = "Нічого стискати — історія порожня.";
+        responseText = at(lang, "slash_compact_empty");
       } else {
         try {
           const gen = client.stream({
@@ -419,11 +404,11 @@ async function handleSlashCommand(
           for await (const event of gen) {
             if (event.type === "delta") summary += event.text;
           }
-          summary = summary.trim() || "(не вдалося створити підсумок)";
+          summary = summary.trim() || "…";
           await store.saveMessages(sessionId, []);
-          responseText = `📎 Історію стиснуто в підсумок:\n\n${summary}`;
+          responseText = at(lang, "slash_compact_prefix", summary);
         } catch (e: any) {
-          responseText = `Не вдалося стиснути історію: ${e?.message ?? e}`;
+          responseText = at(lang, "slash_compact_failed", e?.message ?? String(e));
         }
       }
       break;
@@ -432,43 +417,43 @@ async function handleSlashCommand(
     case "/memory": {
       const memory = await store.loadMemory();
       responseText = !settings.personalizationEnabled
-        ? "Персоналізація вимкнена в налаштуваннях — агент нічого не запам'ятовує."
+        ? at(lang, "slash_memory_disabled")
         : memory.notes.length
-          ? "Що агент запам'ятав про тебе:\n" + memory.notes.map((n) => `- ${n}`).join("\n")
-          : "Поки що агент нічого не запам'ятав.";
+          ? at(lang, "slash_memory_list", memory.notes.map((n) => `- ${n}`).join("\n"))
+          : at(lang, "slash_memory_empty");
       break;
     }
 
     case "/remember": {
       if (!argText) {
-        responseText = "Вкажи, що запам'ятати: /remember текст факту.";
+        responseText = at(lang, "slash_remember_missing_arg");
       } else {
         const memory = await store.loadMemory();
         memory.notes.push(argText);
         memory.updatedAt = Date.now();
         await store.saveMemory(memory);
-        responseText = `Запам'ятав: ${argText}`;
+        responseText = at(lang, "slash_remember_done", argText);
       }
       break;
     }
 
     case "/forget": {
       await store.saveMemory({ enabled: settings.personalizationEnabled, notes: [], updatedAt: Date.now() });
-      responseText = "Всю пам'ять про тебе стерто.";
+      responseText = at(lang, "slash_forget_done");
       break;
     }
 
     case "/lessons": {
       const lessonsStore = await store.loadLessons();
       responseText = lessonsStore.lessons.length
-        ? "Вивчені уроки з минулих помилок:\n" + lessonsStore.lessons.map((l) => `- ${l}`).join("\n")
-        : "Поки що жодних уроків не записано.";
+        ? at(lang, "slash_lessons_list", lessonsStore.lessons.map((l) => `- ${l}`).join("\n"))
+        : at(lang, "slash_lessons_empty");
       break;
     }
 
     case "/forget-lessons": {
       await store.saveLessons({ lessons: [], updatedAt: Date.now() });
-      responseText = "Уроки з минулих помилок стерто.";
+      responseText = at(lang, "slash_forget_lessons_done");
       break;
     }
 
@@ -476,13 +461,13 @@ async function handleSlashCommand(
     case "/pwd": {
       const folders = session.folderPaths ?? [];
       responseText = folders.length
-        ? "Прикріплені папки:\n" + folders.map((f) => `- ${f}`).join("\n")
-        : "Жодної папки не прикріплено до цієї сесії.";
+        ? at(lang, "slash_folders_list", folders.map((f) => `- ${f}`).join("\n"))
+        : at(lang, "slash_folders_empty");
       break;
     }
 
     case "/mode": {
-      responseText = `Поточний режим: ${session.mode}`;
+      responseText = at(lang, "slash_mode_current", session.mode);
       break;
     }
 
@@ -492,54 +477,55 @@ async function handleSlashCommand(
       const newMode = cmd.slice(1) as SessionSummary["mode"];
       await store.updateSession(sessionId, { mode: newMode });
       refreshSession = true;
-      responseText = `Режим перемкнуто на: ${newMode}`;
+      responseText = at(lang, "slash_mode_switched", newMode);
       break;
     }
 
     case "/rename": {
       if (!argText) {
-        responseText = "Вкажи нову назву: /rename нова назва сесії.";
+        responseText = at(lang, "slash_rename_missing_arg");
       } else {
         const title = argText.slice(0, 80);
         await store.updateSession(sessionId, { title });
         refreshSession = true;
-        responseText = `Сесію перейменовано на: ${title}`;
+        responseText = at(lang, "slash_rename_done", title);
       }
       break;
     }
 
     case "/system": {
       responseText = settings.systemPrompt.trim()
-        ? `Кастомний системний промпт із налаштувань:\n\n${settings.systemPrompt.trim()}`
-        : "Кастомний системний промпт не заданий у налаштуваннях.";
+        ? at(lang, "slash_system_prompt", settings.systemPrompt.trim())
+        : at(lang, "slash_system_prompt_empty");
       break;
     }
 
     case "/whoami": {
       const provider = PROVIDERS[apiKey.providerId];
-      responseText =
-        `Тип сесії: ${session.kind}\n` +
-        `Провайдер: ${provider?.displayName ?? apiKey.providerId}\n` +
-        `Модель: ${apiKey.model}\n` +
-        `Режим: ${session.mode}\n` +
-        `Папок прикріплено: ${(session.folderPaths ?? []).length}`;
+      responseText = at(
+        lang,
+        "slash_whoami",
+        session.kind,
+        provider?.displayName ?? apiKey.providerId,
+        apiKey.model,
+        session.mode,
+        String((session.folderPaths ?? []).length)
+      );
       break;
     }
 
     case "/export": {
       try {
         const messages = await store.loadMessages(sessionId);
-        const lines = messages.map(
-          (m) => `## ${m.role === "user" ? "Користувач" : m.role === "assistant" ? "Агент" : m.role}\n\n${m.content}`
-        );
+        const lines = messages.map((m) => `## ${m.role}\n\n${m.content}`);
         const md = `# ${session.title || "Dertet Code chat"}\n\n${lines.join("\n\n")}\n`;
         const targetDir = session.folderPaths?.[0] || app.getPath("documents");
         const fileName = `dertet-chat-${new Date().toISOString().replace(/[:.]/g, "-")}.md`;
         const filePath = path.join(targetDir, fileName);
         await fs.writeFile(filePath, md, "utf8");
-        responseText = `Чат збережено у файл:\n${filePath}`;
+        responseText = at(lang, "slash_export_done", filePath);
       } catch (e: any) {
-        responseText = `Не вдалося зберегти чат: ${e?.message ?? e}`;
+        responseText = at(lang, "slash_export_failed", e?.message ?? String(e));
       }
       break;
     }
@@ -547,42 +533,37 @@ async function handleSlashCommand(
     case "/history": {
       const folder = session.folderPaths?.[0];
       const history = folder ? await readProjectHistory(folder) : null;
-      responseText = history
-        ? `Історія інших сесій у цій папці проєкту:\n\n${history}`
-        : "Немає збереженої історії інших сесій для цієї папки (або папка не прикріплена).";
+      responseText = history ? at(lang, "slash_history_body", history) : at(lang, "slash_history_empty");
       break;
     }
 
     case "/doctor": {
       const checks: string[] = [];
-      checks.push(apiKey.apiKey?.trim() ? "✅ API ключ заданий" : "⚠️ API ключ порожній (може бути ок для локальної моделі)");
+      checks.push(apiKey.apiKey?.trim() ? at(lang, "slash_doctor_key_ok") : at(lang, "slash_doctor_key_warn"));
       const folders = session.folderPaths ?? [];
       if (!folders.length) {
-        checks.push("⚠️ Жодної папки проєкту не прикріплено");
+        checks.push(at(lang, "slash_doctor_no_folders"));
       } else {
         for (const f of folders) {
           try {
             await fs.access(f);
-            checks.push(`✅ Папка існує: ${f}`);
+            checks.push(at(lang, "slash_doctor_folder_ok", f));
           } catch {
-            checks.push(`❌ Папку не знайдено на диску: ${f}`);
+            checks.push(at(lang, "slash_doctor_folder_missing", f));
           }
         }
       }
-      responseText = "Перевірка стану сесії:\n" + checks.join("\n");
+      responseText = at(lang, "slash_doctor_header", checks.join("\n"));
       break;
     }
 
     case "/version": {
-      responseText = `Dertet Harness Desktop v${app.getVersion()}`;
+      responseText = at(lang, "slash_version", app.getVersion());
       break;
     }
 
     case "/bug": {
-      responseText =
-        "Якщо щось працює не так — опиши проблему в наступному повідомленні (що робив(-ла), що очікував(-ла), " +
-        "що сталось насправді) і, якщо це стосується коду, спробуй /plsfix, щоб агент одразу розібрався і " +
-        "виправив без зайвих уточнень.";
+      responseText = at(lang, "slash_bug");
       break;
     }
 
@@ -618,6 +599,7 @@ export async function runTurn(
   const provider = PROVIDERS[apiKey.providerId];
   const client = clientForStyle(provider.apiStyle);
   const isDertetCode = session.kind === "dertet_code";
+  const lang = settings.language;
 
   // A previous turn for this exact session might still be running (e.g. stuck in a retry wait) if the
   // UI's local "is this session busy" state ever gets out of sync with the real server-side state —
@@ -725,7 +707,7 @@ export async function runTurn(
         thinkingBuffer = "";
         toolCalls = [];
         streamError = null;
-        const thinkingActivity: AgentActivity = { kind: "thinking", label: "Думаю…", detailKind: "none" };
+        const thinkingActivity: AgentActivity = { kind: "thinking", label: at(lang, "activity_thinking"), detailKind: "none" };
         agentEvents.emit("activity", { sessionId, messageId: assistantMsg.id, activity: thinkingActivity });
         try {
           const gen = client.stream({
@@ -747,7 +729,7 @@ export async function runTurn(
               agentEvents.emit("activity", {
                 sessionId,
                 messageId: assistantMsg.id,
-                activity: { kind: "thinking", label: "Думаю…", detailKind: "text", detailText: thinkingBuffer }
+                activity: { kind: "thinking", label: at(lang, "activity_thinking"), detailKind: "text", detailText: thinkingBuffer }
               });
             } else if (event.type === "tool_call") {
               toolCalls.push({
@@ -918,7 +900,7 @@ export async function runTurn(
         call.status = "running";
         call.startedAt = Date.now();
         agentEvents.emit("tool_call_update", { sessionId, messageId: assistantMsg.id, toolCall: call });
-        agentEvents.emit("activity", { sessionId, messageId: assistantMsg.id, activity: activityForToolCall(call, visitedPages) });
+        agentEvents.emit("activity", { sessionId, messageId: assistantMsg.id, activity: activityForToolCall(call, visitedPages, lang) });
 
         const result = await executeTool(
           { id: call.id, name: call.toolName, args: call.args },
@@ -951,11 +933,7 @@ export async function runTurn(
     }
 
     if (steps >= MAX_AGENT_STEPS) {
-      const limitMsg = newMessage(
-        sessionId,
-        "assistant",
-        "Досягнуто ліміту кроків агента для цього повідомлення. Напишіть ще раз, щоб продовжити."
-      );
+      const limitMsg = newMessage(sessionId, "assistant", at(lang, "agent_step_limit_reached"));
       await store.appendMessage(sessionId, limitMsg);
       agentEvents.emit("message_done", { sessionId, message: limitMsg });
     }

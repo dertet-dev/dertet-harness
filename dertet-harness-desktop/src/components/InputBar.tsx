@@ -2,10 +2,10 @@ import React, { useRef, useState } from "react";
 import { Attachment, AgentMode, dertet } from "../api";
 import { useI18n } from "../i18n";
 
-const MODES: { id: AgentMode; label: string }[] = [
-  { id: "default", label: "Default" },
-  { id: "plan", label: "Plan" },
-  { id: "auto", label: "Auto" }
+const MODES: { id: AgentMode; labelKey: string }[] = [
+  { id: "default", labelKey: "mode_default" },
+  { id: "plan", labelKey: "mode_plan" },
+  { id: "auto", labelKey: "mode_auto" }
 ];
 
 function readFileAsAttachment(file: File): Promise<Attachment> {
@@ -171,7 +171,7 @@ export function InputBar({
                 style={{ width: "auto", borderRadius: 16, padding: "0 12px", fontSize: 12 }}
                 onClick={() => setModeMenuOpen((v) => !v)}
               >
-                {MODES.find((m) => m.id === mode)?.label ?? "Default"}
+                {t(MODES.find((m) => m.id === mode)?.labelKey ?? "mode_default")}
               </button>
               {modeMenuOpen && (
                 <div className="dialog" style={{ position: "absolute", bottom: 44, left: 0, width: 140, padding: 6 }}>
@@ -185,7 +185,7 @@ export function InputBar({
                         onModeChange?.(m.id);
                       }}
                     >
-                      {m.label}
+                      {t(m.labelKey)}
                     </button>
                   ))}
                 </div>

@@ -82,10 +82,10 @@ export function DertetCodeView({
         </div>
         <div className="view-header-tabs">
           <button className={`tab-btn ${tab === "chat" ? "active" : ""}`} onClick={() => setTab("chat")}>
-            Chat
+            {t("tab_chat")}
           </button>
           <button className={`tab-btn ${tab === "actions" ? "active" : ""}`} onClick={() => setTab("actions")}>
-            Actions
+            {t("tab_actions")}
           </button>
         </div>
       </div>

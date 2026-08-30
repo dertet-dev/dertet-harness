@@ -1,7 +1,9 @@
 import React from "react";
 import { diffLines } from "diff";
+import { useI18n } from "../i18n";
 
 export function DiffView({ path, before, after }: { path: string; before: string; after: string }) {
+  const { t } = useI18n();
   const parts = diffLines(before, after);
   const lines: { text: string; type: "add" | "del" | "ctx" }[] = [];
   for (const part of parts) {
@@ -11,7 +13,7 @@ export function DiffView({ path, before, after }: { path: string; before: string
       lines.push({ text: (type === "add" ? "+ " : type === "del" ? "- " : "  ") + line, type });
     }
   }
-  const trimmed = lines.length > 400 ? lines.slice(0, 400).concat([{ text: "…(обрізано)", type: "ctx" }]) : lines;
+  const trimmed = lines.length > 400 ? lines.slice(0, 400).concat([{ text: t("truncated"), type: "ctx" }]) : lines;
 
   return (
     <div className="diff-block">

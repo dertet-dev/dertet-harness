@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { dertet } from "./api";
 
 export const LANGUAGES = ["uk", "en", "ru", "pt", "pl", "kk", "ro", "de", "fr"] as const;
 export type LangCode = (typeof LANGUAGES)[number];
@@ -87,7 +88,19 @@ const TRANSLATIONS: Record<LangCode, Dict> = {
     ask_choice_skip: "Пропустити",
     ask_choice_page: "з",
     retrying: "Помилка з'єднання, повтор через {0}с (спроба {1})…",
-    rename: "Перейменувати"
+    rename: "Перейменувати",
+    tab_chat: "Чат",
+    tab_actions: "Дії",
+    mode_default: "Стандартний",
+    mode_plan: "План",
+    mode_auto: "Авто",
+    model_picker_search_placeholder: "Пошук серед {0} моделей…",
+    model_picker_count: "{0} із {1} моделей",
+    model_picker_none_found: "Нічого не знайдено",
+    truncated: "…(обрізано)",
+    settings_video_section: "Відеоредактор (ffmpeg)",
+    settings_ffmpeg_path_placeholder: "Шлях до ffmpeg.exe (порожньо — використати ffmpeg з PATH)",
+    settings_ffmpeg_hint: "Потрібен встановлений ffmpeg, щоб агент міг додавати аудіо до відео, обрізати й склеювати кліпи чи збирати відео зі зображень."
   },
   en: {
     new_chat: "New chat",
@@ -158,7 +171,19 @@ const TRANSLATIONS: Record<LangCode, Dict> = {
     ask_choice_skip: "Skip",
     ask_choice_page: "of",
     retrying: "Connection error, retrying in {0}s (attempt {1})…",
-    rename: "Rename"
+    rename: "Rename",
+    tab_chat: "Chat",
+    tab_actions: "Actions",
+    mode_default: "Default",
+    mode_plan: "Plan",
+    mode_auto: "Auto",
+    model_picker_search_placeholder: "Search {0} models…",
+    model_picker_count: "{0} of {1} models",
+    model_picker_none_found: "Nothing found",
+    truncated: "…(truncated)",
+    settings_video_section: "Video editor (ffmpeg)",
+    settings_ffmpeg_path_placeholder: "Path to ffmpeg.exe (leave empty to use ffmpeg from PATH)",
+    settings_ffmpeg_hint: "Requires ffmpeg to be installed so the agent can add audio to video, trim and concatenate clips, or assemble video from images."
   },
   ru: {
     new_chat: "Новый чат",
@@ -227,7 +252,21 @@ const TRANSLATIONS: Record<LangCode, Dict> = {
     remove_folder_access: "Убрать доступ",
     ask_choice_custom_placeholder: "Свой вариант…",
     ask_choice_skip: "Пропустить",
-    ask_choice_page: "из"
+    ask_choice_page: "из",
+    retrying: "Ошибка соединения, повтор через {0}с (попытка {1})…",
+    rename: "Переименовать",
+    tab_chat: "Чат",
+    tab_actions: "Действия",
+    mode_default: "Стандартный",
+    mode_plan: "План",
+    mode_auto: "Авто",
+    model_picker_search_placeholder: "Поиск среди {0} моделей…",
+    model_picker_count: "{0} из {1} моделей",
+    model_picker_none_found: "Ничего не найдено",
+    truncated: "…(обрезано)",
+    settings_video_section: "Видеоредактор (ffmpeg)",
+    settings_ffmpeg_path_placeholder: "Путь к ffmpeg.exe (пусто — использовать ffmpeg из PATH)",
+    settings_ffmpeg_hint: "Нужен установленный ffmpeg, чтобы агент мог добавлять аудио к видео, обрезать и склеивать клипы или собирать видео из изображений."
   },
   pt: {
     new_chat: "Nova conversa",
@@ -296,7 +335,21 @@ const TRANSLATIONS: Record<LangCode, Dict> = {
     remove_folder_access: "Remover acesso",
     ask_choice_custom_placeholder: "Resposta personalizada…",
     ask_choice_skip: "Pular",
-    ask_choice_page: "de"
+    ask_choice_page: "de",
+    retrying: "Erro de conexão, tentando novamente em {0}s (tentativa {1})…",
+    rename: "Renomear",
+    tab_chat: "Chat",
+    tab_actions: "Ações",
+    mode_default: "Padrão",
+    mode_plan: "Plano",
+    mode_auto: "Automático",
+    model_picker_search_placeholder: "Buscar entre {0} modelos…",
+    model_picker_count: "{0} de {1} modelos",
+    model_picker_none_found: "Nada encontrado",
+    truncated: "…(truncado)",
+    settings_video_section: "Editor de vídeo (ffmpeg)",
+    settings_ffmpeg_path_placeholder: "Caminho para o ffmpeg.exe (vazio — usar o ffmpeg do PATH)",
+    settings_ffmpeg_hint: "Requer o ffmpeg instalado para o agente adicionar áudio a vídeos, cortar e unir clipes, ou montar vídeos a partir de imagens."
   },
   pl: {
     new_chat: "Nowy czat",
@@ -365,7 +418,21 @@ const TRANSLATIONS: Record<LangCode, Dict> = {
     remove_folder_access: "Usuń dostęp",
     ask_choice_custom_placeholder: "Własna odpowiedź…",
     ask_choice_skip: "Pomiń",
-    ask_choice_page: "z"
+    ask_choice_page: "z",
+    retrying: "Błąd połączenia, ponowna próba za {0}s (próba {1})…",
+    rename: "Zmień nazwę",
+    tab_chat: "Czat",
+    tab_actions: "Działania",
+    mode_default: "Domyślny",
+    mode_plan: "Plan",
+    mode_auto: "Automatyczny",
+    model_picker_search_placeholder: "Szukaj wśród {0} modeli…",
+    model_picker_count: "{0} z {1} modeli",
+    model_picker_none_found: "Nic nie znaleziono",
+    truncated: "…(przycięto)",
+    settings_video_section: "Edytor wideo (ffmpeg)",
+    settings_ffmpeg_path_placeholder: "Ścieżka do ffmpeg.exe (pusto — użyj ffmpeg z PATH)",
+    settings_ffmpeg_hint: "Wymaga zainstalowanego ffmpeg, aby agent mógł dodawać dźwięk do wideo, przycinać i łączyć klipy lub tworzyć wideo ze zdjęć."
   },
   kk: {
     new_chat: "Жаңа чат",
@@ -434,7 +501,21 @@ const TRANSLATIONS: Record<LangCode, Dict> = {
     remove_folder_access: "Қатынасты алып тастау",
     ask_choice_custom_placeholder: "Өз нұсқаңыз…",
     ask_choice_skip: "Өткізіп жіберу",
-    ask_choice_page: "/"
+    ask_choice_page: "/",
+    retrying: "Байланыс қатесі, {0}с кейін қайталау (әрекет {1})…",
+    rename: "Атын өзгерту",
+    tab_chat: "Чат",
+    tab_actions: "Әрекеттер",
+    mode_default: "Әдепкі",
+    mode_plan: "Жоспар",
+    mode_auto: "Авто",
+    model_picker_search_placeholder: "{0} модельден іздеу…",
+    model_picker_count: "{0} / {1} модель",
+    model_picker_none_found: "Ешнәрсе табылмады",
+    truncated: "…(қысқартылды)",
+    settings_video_section: "Видео редакторы (ffmpeg)",
+    settings_ffmpeg_path_placeholder: "ffmpeg.exe жолы (бос — PATH-тағы ffmpeg қолданылады)",
+    settings_ffmpeg_hint: "Агенттің видеоға аудио қосуы, кліптерді қиюы мен жалғауы немесе суреттерден видео жинауы үшін орнатылған ffmpeg қажет."
   },
   ro: {
     new_chat: "Chat nou",
@@ -503,7 +584,21 @@ const TRANSLATIONS: Record<LangCode, Dict> = {
     remove_folder_access: "Elimină accesul",
     ask_choice_custom_placeholder: "Răspuns personalizat…",
     ask_choice_skip: "Omite",
-    ask_choice_page: "din"
+    ask_choice_page: "din",
+    retrying: "Eroare de conexiune, reîncercare în {0}s (încercarea {1})…",
+    rename: "Redenumește",
+    tab_chat: "Chat",
+    tab_actions: "Acțiuni",
+    mode_default: "Implicit",
+    mode_plan: "Plan",
+    mode_auto: "Automat",
+    model_picker_search_placeholder: "Caută printre {0} modele…",
+    model_picker_count: "{0} din {1} modele",
+    model_picker_none_found: "Nimic găsit",
+    truncated: "…(trunchiat)",
+    settings_video_section: "Editor video (ffmpeg)",
+    settings_ffmpeg_path_placeholder: "Calea către ffmpeg.exe (gol — folosește ffmpeg din PATH)",
+    settings_ffmpeg_hint: "Necesită ffmpeg instalat ca agentul să poată adăuga audio la video, să taie și să unească clipuri sau să asambleze video din imagini."
   },
   de: {
     new_chat: "Neuer Chat",
@@ -572,7 +667,21 @@ const TRANSLATIONS: Record<LangCode, Dict> = {
     remove_folder_access: "Zugriff entfernen",
     ask_choice_custom_placeholder: "Eigene Antwort…",
     ask_choice_skip: "Überspringen",
-    ask_choice_page: "von"
+    ask_choice_page: "von",
+    retrying: "Verbindungsfehler, erneuter Versuch in {0}s (Versuch {1})…",
+    rename: "Umbenennen",
+    tab_chat: "Chat",
+    tab_actions: "Aktionen",
+    mode_default: "Standard",
+    mode_plan: "Plan",
+    mode_auto: "Automatisch",
+    model_picker_search_placeholder: "Unter {0} Modellen suchen…",
+    model_picker_count: "{0} von {1} Modellen",
+    model_picker_none_found: "Nichts gefunden",
+    truncated: "…(gekürzt)",
+    settings_video_section: "Videoeditor (ffmpeg)",
+    settings_ffmpeg_path_placeholder: "Pfad zu ffmpeg.exe (leer — ffmpeg aus PATH verwenden)",
+    settings_ffmpeg_hint: "Erfordert ein installiertes ffmpeg, damit der Agent Audio zu Videos hinzufügen, Clips schneiden und zusammenfügen oder ein Video aus Bildern erstellen kann."
   },
   fr: {
     new_chat: "Nouvelle discussion",
@@ -641,7 +750,21 @@ const TRANSLATIONS: Record<LangCode, Dict> = {
     remove_folder_access: "Retirer l'accès",
     ask_choice_custom_placeholder: "Réponse personnalisée…",
     ask_choice_skip: "Passer",
-    ask_choice_page: "sur"
+    ask_choice_page: "sur",
+    retrying: "Erreur de connexion, nouvelle tentative dans {0}s (tentative {1})…",
+    rename: "Renommer",
+    tab_chat: "Chat",
+    tab_actions: "Actions",
+    mode_default: "Par défaut",
+    mode_plan: "Plan",
+    mode_auto: "Auto",
+    model_picker_search_placeholder: "Rechercher parmi {0} modèles…",
+    model_picker_count: "{0} sur {1} modèles",
+    model_picker_none_found: "Rien trouvé",
+    truncated: "…(tronqué)",
+    settings_video_section: "Éditeur vidéo (ffmpeg)",
+    settings_ffmpeg_path_placeholder: "Chemin vers ffmpeg.exe (vide — utiliser ffmpeg du PATH)",
+    settings_ffmpeg_hint: "Nécessite ffmpeg installé pour que l'agent puisse ajouter de l'audio à une vidéo, découper et assembler des clips, ou créer une vidéo à partir d'images."
   }
 };
 
@@ -673,6 +796,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }
 
   const effectiveLang: LangCode = lang === "system" ? detectSystemLang() : lang;
+
+  useEffect(() => {
+    // Backend-generated text (slash-command replies, agent activity labels) has no view of the
+    // renderer's own language state otherwise — persisting the resolved code into Settings is what
+    // lets agentLoop.ts match whatever language the UI is actually showing.
+    dertet().settings.update({ language: effectiveLang }).catch(() => {});
+  }, [effectiveLang]);
 
   function t(key: string, ...args: string[]): string {
     const dict = TRANSLATIONS[effectiveLang] ?? TRANSLATIONS.uk;

@@ -323,16 +323,14 @@ export function SettingsView() {
         </section>
 
         <section>
-          <div className="settings-section-title">Відеоредактор (ffmpeg)</div>
+          <div className="settings-section-title">{t("settings_video_section")}</div>
           <input
             className="field-input"
-            placeholder="Шлях до ffmpeg.exe (порожньо — використати ffmpeg з PATH)"
+            placeholder={t("settings_ffmpeg_path_placeholder")}
             value={settings.ffmpegPath ?? ""}
             onChange={(e) => updateSettingsField({ ffmpegPath: e.target.value })}
           />
-          <div className="settings-hint">
-            Потрібен встановлений ffmpeg, щоб агент міг додавати аудіо до відео, обрізати й склеювати кліпи чи збирати відео зі зображень.
-          </div>
+          <div className="settings-hint">{t("settings_ffmpeg_hint")}</div>
         </section>
       </div>
     </div>
