@@ -53,18 +53,18 @@ This is the desktop-only agent harness, and it's the reason the project exists i
 
 ## Getting the app
 
-- **Windows:** grab the installer from [`dertetgpt-desktop/release/`](dertetgpt-desktop/release/) or build it yourself — see below.
+- **Windows:** grab the installer from [`dertet-harness-desktop/release/`](dertet-harness-desktop/release/) or build it yourself — see below.
 - **Android:** build from source (no Play Store listing yet).
-- **iOS:** source only for now — see [`dertetgpt-ios/README.md`](dertetgpt-ios/README.md) for the Xcode setup, since there's no signed build to distribute without an Apple developer account.
+- **iOS:** source only for now — see [`dertet-harness-ios/README.md`](dertet-harness-ios/README.md) for the Xcode setup, since there's no signed build to distribute without an Apple developer account.
 
 ## Building from source
 
 Each platform lives in its own folder with its own toolchain:
 
 ```
-dertetgpt-desktop/   Electron + TypeScript + React — npm install && npm run dist
-dertetgpt/           Android, Kotlin + Jetpack Compose — Gradle
-dertetgpt-ios/       iOS, Swift + SwiftUI — see the README inside, needs Xcode on macOS
+dertet-harness-desktop/   Electron + TypeScript + React — npm install && npm run dist
+dertet-harness-android/   Android, Kotlin + Jetpack Compose — Gradle
+dertet-harness-ios/       iOS, Swift + SwiftUI — see the README inside, needs Xcode on macOS
 ```
 
 Desktop build produces both an NSIS installer and a plain unpacked folder under `release/`. Android needs your own signing keystore (see `keystore.properties.example` if you're setting one up — the real one is never committed). iOS has no `.xcodeproj` checked in on purpose; the README walks through creating one fresh in Xcode and dropping the source files in.

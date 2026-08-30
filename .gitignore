@@ -3,28 +3,29 @@
 /gradle-8.9/
 /gradle-8.9-bin.zip
 /sdk-downloads/
-/DertetGPT-iOS-source.zip
+/DertetHarness-iOS-source.zip
 
-# --- Desktop (dertetgpt-desktop) ---
-dertetgpt-desktop/node_modules/
-dertetgpt-desktop/dist/
-dertetgpt-desktop/release/win-unpacked/
-dertetgpt-desktop/release/*.blockmap
-dertetgpt-desktop/release/builder-debug.yml
+# --- Desktop (dertet-harness-desktop) ---
+dertet-harness-desktop/node_modules/
+dertet-harness-desktop/dist/
+dertet-harness-desktop/release/win-unpacked/
+dertet-harness-desktop/release/*.blockmap
+dertet-harness-desktop/release/builder-debug.yml
+dertet-harness-desktop/release/*.exe
 
-# --- Android (dertetgpt) ---
-dertetgpt/.gradle/
-dertetgpt/app/build/
-dertetgpt/build/
-dertetgpt/local.properties
-dertetgpt/keystore/
-dertetgpt/keystore.properties
-dertetgpt/.kotlin/
-dertetgpt/tools/__pycache__/
+# --- Android (dertet-harness-android) ---
+dertet-harness-android/.gradle/
+dertet-harness-android/app/build/
+dertet-harness-android/build/
+dertet-harness-android/local.properties
+dertet-harness-android/keystore/
+dertet-harness-android/keystore.properties
+dertet-harness-android/.kotlin/
+dertet-harness-android/tools/__pycache__/
 
-# --- iOS (dertetgpt-ios) ---
-dertetgpt-ios/**/xcuserdata/
-dertetgpt-ios/**/.DS_Store
+# --- iOS (dertet-harness-ios) ---
+dertet-harness-ios/**/xcuserdata/
+dertet-harness-ios/**/.DS_Store
 
 # General
 *.log
