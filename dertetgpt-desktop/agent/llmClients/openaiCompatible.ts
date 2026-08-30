@@ -110,6 +110,18 @@ export const openAiCompatibleClient: LlmClient = {
         }
         const delta = json.choices?.[0]?.delta;
         if (!delta) continue;
+        // Passive parsing only — never requested via a request-body flag, so this is a pure no-op on
+        // providers that don't send it (native OpenAI). OpenRouter uses "reasoning"/"reasoning_details",
+        // DeepSeek (and many vLLM-backed OpenAI-compatible hosts) use "reasoning_content".
+        const reasoningText: string | undefined =
+          typeof delta.reasoning === "string"
+            ? delta.reasoning
+            : typeof delta.reasoning_content === "string"
+              ? delta.reasoning_content
+              : Array.isArray(delta.reasoning_details)
+                ? delta.reasoning_details.map((d: any) => d?.text ?? d?.summary ?? "").join("")
+                : undefined;
+        if (reasoningText) yield { type: "thinking_delta", text: reasoningText };
         if (typeof delta.content === "string" && delta.content.length) {
           gotAny = true;
           yield { type: "delta", text: delta.content };

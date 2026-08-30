@@ -229,6 +229,24 @@ input, textarea, button, [contenteditable] { user-select: text; }
 .typing-dots { color: var(--secondary); margin-top: 4px; font-size: 12px; animation: typing-pulse 1.2s ease-in-out infinite; }
 @keyframes typing-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
+.agent-status-row {
+  display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 0;
+  color: var(--on-surface-muted); font-size: 12.5px; font-family: inherit; text-align: left;
+}
+.agent-status-row .typing-dots { margin-top: 0; }
+.agent-status-label { color: var(--on-bg); }
+.agent-status-chevron { font-size: 10px; transition: transform 0.15s ease; }
+.agent-status-chevron.open { transform: rotate(180deg); }
+.agent-status-detail {
+  margin-top: 8px; padding: 8px 10px; background: var(--surface-high); border: 1px solid var(--outline);
+  border-radius: var(--radius-sm); max-height: 220px; overflow-y: auto;
+}
+.agent-status-detail-text { font-size: 12.5px; color: var(--on-surface-muted); white-space: pre-wrap; }
+.agent-status-detail-urls { display: flex; flex-direction: column; gap: 6px; }
+.agent-status-detail-url { font-size: 12.5px; }
+.agent-status-detail-url-title { color: var(--on-bg); }
+.agent-status-detail-url-href { color: var(--on-surface-muted); font-family: monospace; font-size: 11.5px; word-break: break-all; }
+
 .context-menu {
   position: fixed; z-index: 80; background: var(--surface-high); border: 1px solid var(--outline);
   border-radius: var(--radius-sm); padding: 4px; min-width: 130px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
@@ -382,6 +400,7 @@ input, textarea, button, [contenteditable] { user-select: text; }
 }
 .field-input:focus, .field-select:focus, .field-textarea:focus { border-color: var(--primary); }
 .field-textarea { resize: vertical; min-height: 70px; }
+.settings-hint { font-size: 12px; color: var(--on-surface-muted); margin-top: 6px; line-height: 1.4; }
 .field-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .field-row:last-child { margin-bottom: 0; }
 .btn {

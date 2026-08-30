@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Attachment, ChoiceQuestion, MessageRecord, dertet } from "../api";
+import { Attachment, AgentActivity, ChoiceQuestion, MessageRecord, dertet } from "../api";
 
 export function useSessionChat(sessionId: string) {
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [streaming, setStreaming] = useState<{ messageId: string; text: string } | null>(null);
+  const [activity, setActivity] = useState<AgentActivity | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [computerUseRequestId, setComputerUseRequestId] = useState<string | null>(null);
   const [pendingSend, setPendingSend] = useState(false);
@@ -32,6 +33,10 @@ export function useSessionChat(sessionId: string) {
       setPendingSend(false);
       setRetryStatus(null);
       setStreaming({ messageId: p.messageId, text: p.text });
+    });
+    const offActivity = dertet().on.activity((p) => {
+      if (p.sessionId !== sessionId) return;
+      setActivity(p.activity);
     });
     const offDone = dertet().on.messageDone((p) => {
       if (p.sessionId !== sessionId) return;
@@ -79,6 +84,7 @@ export function useSessionChat(sessionId: string) {
       setRetryStatus(null);
       setErrorBanner(p.message);
       setStreaming(null);
+      setActivity(null);
     });
     const offIdle = dertet().on.sessionIdle((p) => {
       if (p.sessionId !== sessionId) return;
@@ -86,6 +92,7 @@ export function useSessionChat(sessionId: string) {
       setTurnActive(false);
       setRetryStatus(null);
       setStreaming(null);
+      setActivity(null);
     });
     const offComputerUse = dertet().on.computerUsePermissionRequest((p) => {
       if (p.sessionId !== sessionId) return;
@@ -109,6 +116,7 @@ export function useSessionChat(sessionId: string) {
     return () => {
       cancelled = true;
       offDelta();
+      offActivity();
       offDone();
       offToolUpdate();
       offError();
@@ -129,6 +137,7 @@ export function useSessionChat(sessionId: string) {
     ]);
     setPendingSend(true);
     setTurnActive(true);
+    setActivity(null);
     dertet().chat.send(sessionId, text, attachments);
   }
 
@@ -161,6 +170,7 @@ export function useSessionChat(sessionId: string) {
   return {
     messages,
     streaming,
+    activity,
     pendingSend,
     errorBanner,
     isSending,

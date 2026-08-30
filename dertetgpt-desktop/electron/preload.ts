@@ -56,6 +56,7 @@ contextBridge.exposeInMainWorld("dertet", {
   },
   on: {
     delta: (cb: (p: any) => void) => on("agent:delta", cb),
+    activity: (cb: (p: any) => void) => on("agent:activity", cb),
     toolCallUpdate: (cb: (p: any) => void) => on("agent:tool_call_update", cb),
     messageDone: (cb: (p: any) => void) => on("agent:message_done", cb),
     sessionIdle: (cb: (p: any) => void) => on("agent:session_idle", cb),

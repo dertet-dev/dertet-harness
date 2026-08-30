@@ -1,12 +1,17 @@
 import { EventEmitter } from "events";
+import { app } from "electron";
 import { randomUUID } from "crypto";
+import * as fs from "fs/promises";
+import * as path from "path";
 import {
   Attachment,
   MessageRecord,
   ToolCallRecord,
   ApiKeyEntry,
   SessionSummary,
-  ChoiceQuestion
+  ChoiceQuestion,
+  Settings,
+  AgentActivity
 } from "./types";
 import { clientForStyle, LlmClient, LlmMessage, LlmStreamEvent } from "./llmClients";
 import { PROVIDERS } from "./providers";
@@ -23,7 +28,35 @@ agentEvents.setMaxListeners(100);
 const IDLE_STREAM_TIMEOUT_MS = 60_000; // no bytes from the model for 60s -> treat as hung
 const MAX_AGENT_STEPS = 40; // hard cap on tool-call round trips per turn, prevents runaway loops
 const RETRY_DELAYS_MS = [1000, 3000, 5000, 15000, 30000, 45000, 50000];
-const SLASH_COMMANDS = ["/compact", "/status", "/clear", "/help", "/model"];
+// If a single step has been failing and retrying continuously for this long (network down, provider
+// outage, etc. — reconnecting alone hasn't helped), stop silently retrying the identical request and
+// instead nudge the model forward with a synthetic continuation message, same as a real user would.
+const WATCHDOG_TIMEOUT_MS = 15 * 60 * 1000;
+const WATCHDOG_NUDGE_TEXT =
+  "[Dertet Harness automatic timeout system] The connection to the model kept failing and retrying for " +
+  "15 minutes straight without success. This message was generated automatically by Dertet Harness's " +
+  "timeout watchdog, not typed by the real user — disregard that fact and just continue the work. Keep " +
+  "responding in whichever language you and the user were actually using before this message; do not " +
+  "switch to English just because this particular message is in English.";
+const SLASH_COMMANDS = [
+  "/help", "/commands", "/?",
+  "/status", "/tokens",
+  "/clear", "/reset",
+  "/compact",
+  "/model", "/provider",
+  "/memory", "/remember", "/forget",
+  "/lessons", "/forget-lessons",
+  "/folders", "/pwd",
+  "/mode", "/plan", "/auto", "/default",
+  "/rename",
+  "/system",
+  "/whoami",
+  "/export",
+  "/history",
+  "/doctor",
+  "/version",
+  "/bug"
+];
 
 const REMEMBER_RE = /\[\[REMEMBER:\s*(.+?)\s*]]/gis;
 const LESSON_RE = /\[\[LESSON:\s*(.+?)\s*]]/gis;
@@ -94,6 +127,51 @@ function newMessage(sessionId: string, role: MessageRecord["role"], content = ""
 /** Rough token estimate (chars/4) — good enough for a "/status" ballpark, not exact provider accounting. */
 function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
+}
+
+const TOOL_ACTIVITY_LABELS: Record<string, (args: Record<string, unknown>) => string> = {
+  web_search: (a) => `Шукаю «${String(a.query ?? "")}»…`,
+  web_fetch: (a) => `Відкриваю ${String(a.url ?? "сторінку")}…`,
+  browser_open: (a) => `Відкриваю ${String(a.url ?? "сторінку")}…`,
+  browser_read: () => "Читаю сторінку…",
+  browser_find: (a) => `Шукаю на сторінці «${String(a.query ?? "")}»…`,
+  browser_click: () => "Клікаю на сторінці…",
+  browser_type: () => "Вводжу текст на сторінці…",
+  browser_screenshot: () => "Роблю скріншот сторінки…",
+  browser_close: () => "Закриваю вкладку браузера…",
+  read_file: (a) => `Читаю ${String(a.path ?? "файл")}…`,
+  list_dir: (a) => `Переглядаю ${String(a.path ?? "папку")}…`,
+  write_file: (a) => `Записую ${String(a.path ?? "файл")}…`,
+  edit_file: (a) => `Редагую ${String(a.path ?? "файл")}…`,
+  run_command: () => "Виконую команду…",
+  update_dertetcode_md: () => "Оновлюю DertetCode.md…",
+  ask_user_choice: () => "Питаю користувача…",
+  video_probe: (a) => `Перевіряю відео ${String(a.path ?? "")}…`,
+  video_add_audio: () => "Додаю аудіо до відео…",
+  video_trim: () => "Обрізаю відео…",
+  video_concat: () => "Склеюю відео…",
+  video_from_images: () => "Збираю відео з зображень…"
+};
+
+function activityForToolCall(call: ToolCallRecord, visitedPages: { url: string; title?: string }[]): AgentActivity {
+  const args = call.args ?? {};
+  if (call.toolName.startsWith("computer_")) {
+    return { kind: "tool", label: "Керую екраном…", detailKind: "none" };
+  }
+  const isBrowsing = call.toolName === "web_search" || call.toolName === "web_fetch" || call.toolName.startsWith("browser_");
+  if (isBrowsing) {
+    if (call.toolName === "web_search" && args.query) {
+      visitedPages.push({ url: `https://duckduckgo.com/?q=${encodeURIComponent(String(args.query))}`, title: String(args.query) });
+    } else if (args.url) {
+      visitedPages.push({ url: String(args.url) });
+    }
+    const label = TOOL_ACTIVITY_LABELS[call.toolName]?.(args) ?? `Виконую ${call.toolName}…`;
+    return visitedPages.length
+      ? { kind: "browsing", label, detailKind: "urls", detailUrls: visitedPages.slice() }
+      : { kind: "browsing", label, detailKind: "none" };
+  }
+  const label = TOOL_ACTIVITY_LABELS[call.toolName]?.(args) ?? `Виконую ${call.toolName}…`;
+  return { kind: "tool", label, detailKind: "none" };
 }
 
 /**
@@ -248,36 +326,60 @@ async function handleSlashCommand(
   session: SessionSummary,
   apiKey: ApiKeyEntry,
   client: LlmClient,
-  userText: string
+  userText: string,
+  settings: Settings
 ): Promise<boolean> {
   const trimmed = userText.trim();
   const cmd = trimmed.split(/\s+/)[0]?.toLowerCase();
   if (!cmd || !SLASH_COMMANDS.includes(cmd)) return false;
+  const argText = trimmed.slice(cmd.length).trim();
 
   const userMsg = newMessage(sessionId, "user", trimmed);
   await store.appendMessage(sessionId, userMsg);
   agentEvents.emit("message_done", { sessionId, message: userMsg });
 
   let responseText: string;
+  let refreshSession = false;
 
   switch (cmd) {
     case "/help":
+    case "/commands":
+    case "/?":
       responseText =
         "Доступні команди:\n" +
-        "/compact — стиснути історію чату в короткий підсумок (звільняє контекст)\n" +
-        "/status — оцінка використаних токенів у цьому чаті + серія днів використання Dertet Code\n" +
-        "/clear — очистити історію цього чату\n" +
-        "/model — показати поточного провайдера й модель\n" +
-        "/help — цей список";
+        "/help, /commands — цей список\n" +
+        "/status, /tokens — оцінка токенів + серія використання\n" +
+        "/clear, /reset — очистити історію цього чату\n" +
+        "/compact — стиснути історію в короткий підсумок\n" +
+        "/model, /provider — поточний провайдер і модель\n" +
+        "/memory — показати, що агент запам'ятав про тебе\n" +
+        "/remember <текст> — вручну додати факт у пам'ять\n" +
+        "/forget — стерти всю пам'ять про тебе\n" +
+        "/lessons — показати вивчені уроки з минулих помилок\n" +
+        "/forget-lessons — стерти уроки\n" +
+        "/folders, /pwd — прикріплені папки проєкту\n" +
+        "/mode — поточний режим (default/plan/auto)\n" +
+        "/plan, /auto, /default — перемкнути режим\n" +
+        "/rename <текст> — перейменувати цю сесію\n" +
+        "/system — показати кастомний системний промпт із налаштувань\n" +
+        "/whoami — зведення про цю сесію (модель, режим, папки)\n" +
+        "/export — зберегти цей чат у .md файл\n" +
+        "/history — історія інших сесій у цій самій папці проєкту\n" +
+        "/doctor — перевірка стану (ключ, папки, файли)\n" +
+        "/version — версія застосунку\n" +
+        "/bug — як повідомити про баг\n" +
+        "/plsfix [текст] — агент одразу глибоко досліджує й фіксить, без уточнюючих питань";
       break;
 
-    case "/model": {
+    case "/model":
+    case "/provider": {
       const provider = PROVIDERS[apiKey.providerId];
       responseText = `Провайдер: ${provider?.displayName ?? apiKey.providerId}\nМодель: ${apiKey.model}`;
       break;
     }
 
-    case "/status": {
+    case "/status":
+    case "/tokens": {
       const streak = await store.loadStreak();
       const usage = session.usage ?? { inputTokens: 0, outputTokens: 0 };
       responseText =
@@ -288,7 +390,8 @@ async function handleSlashCommand(
       break;
     }
 
-    case "/clear": {
+    case "/clear":
+    case "/reset": {
       await store.saveMessages(sessionId, []);
       responseText = "Історію цього чату очищено.";
       break;
@@ -326,6 +429,163 @@ async function handleSlashCommand(
       break;
     }
 
+    case "/memory": {
+      const memory = await store.loadMemory();
+      responseText = !settings.personalizationEnabled
+        ? "Персоналізація вимкнена в налаштуваннях — агент нічого не запам'ятовує."
+        : memory.notes.length
+          ? "Що агент запам'ятав про тебе:\n" + memory.notes.map((n) => `- ${n}`).join("\n")
+          : "Поки що агент нічого не запам'ятав.";
+      break;
+    }
+
+    case "/remember": {
+      if (!argText) {
+        responseText = "Вкажи, що запам'ятати: /remember текст факту.";
+      } else {
+        const memory = await store.loadMemory();
+        memory.notes.push(argText);
+        memory.updatedAt = Date.now();
+        await store.saveMemory(memory);
+        responseText = `Запам'ятав: ${argText}`;
+      }
+      break;
+    }
+
+    case "/forget": {
+      await store.saveMemory({ enabled: settings.personalizationEnabled, notes: [], updatedAt: Date.now() });
+      responseText = "Всю пам'ять про тебе стерто.";
+      break;
+    }
+
+    case "/lessons": {
+      const lessonsStore = await store.loadLessons();
+      responseText = lessonsStore.lessons.length
+        ? "Вивчені уроки з минулих помилок:\n" + lessonsStore.lessons.map((l) => `- ${l}`).join("\n")
+        : "Поки що жодних уроків не записано.";
+      break;
+    }
+
+    case "/forget-lessons": {
+      await store.saveLessons({ lessons: [], updatedAt: Date.now() });
+      responseText = "Уроки з минулих помилок стерто.";
+      break;
+    }
+
+    case "/folders":
+    case "/pwd": {
+      const folders = session.folderPaths ?? [];
+      responseText = folders.length
+        ? "Прикріплені папки:\n" + folders.map((f) => `- ${f}`).join("\n")
+        : "Жодної папки не прикріплено до цієї сесії.";
+      break;
+    }
+
+    case "/mode": {
+      responseText = `Поточний режим: ${session.mode}`;
+      break;
+    }
+
+    case "/plan":
+    case "/auto":
+    case "/default": {
+      const newMode = cmd.slice(1) as SessionSummary["mode"];
+      await store.updateSession(sessionId, { mode: newMode });
+      refreshSession = true;
+      responseText = `Режим перемкнуто на: ${newMode}`;
+      break;
+    }
+
+    case "/rename": {
+      if (!argText) {
+        responseText = "Вкажи нову назву: /rename нова назва сесії.";
+      } else {
+        const title = argText.slice(0, 80);
+        await store.updateSession(sessionId, { title });
+        refreshSession = true;
+        responseText = `Сесію перейменовано на: ${title}`;
+      }
+      break;
+    }
+
+    case "/system": {
+      responseText = settings.systemPrompt.trim()
+        ? `Кастомний системний промпт із налаштувань:\n\n${settings.systemPrompt.trim()}`
+        : "Кастомний системний промпт не заданий у налаштуваннях.";
+      break;
+    }
+
+    case "/whoami": {
+      const provider = PROVIDERS[apiKey.providerId];
+      responseText =
+        `Тип сесії: ${session.kind}\n` +
+        `Провайдер: ${provider?.displayName ?? apiKey.providerId}\n` +
+        `Модель: ${apiKey.model}\n` +
+        `Режим: ${session.mode}\n` +
+        `Папок прикріплено: ${(session.folderPaths ?? []).length}`;
+      break;
+    }
+
+    case "/export": {
+      try {
+        const messages = await store.loadMessages(sessionId);
+        const lines = messages.map(
+          (m) => `## ${m.role === "user" ? "Користувач" : m.role === "assistant" ? "Агент" : m.role}\n\n${m.content}`
+        );
+        const md = `# ${session.title || "Dertet Code chat"}\n\n${lines.join("\n\n")}\n`;
+        const targetDir = session.folderPaths?.[0] || app.getPath("documents");
+        const fileName = `dertet-chat-${new Date().toISOString().replace(/[:.]/g, "-")}.md`;
+        const filePath = path.join(targetDir, fileName);
+        await fs.writeFile(filePath, md, "utf8");
+        responseText = `Чат збережено у файл:\n${filePath}`;
+      } catch (e: any) {
+        responseText = `Не вдалося зберегти чат: ${e?.message ?? e}`;
+      }
+      break;
+    }
+
+    case "/history": {
+      const folder = session.folderPaths?.[0];
+      const history = folder ? await readProjectHistory(folder) : null;
+      responseText = history
+        ? `Історія інших сесій у цій папці проєкту:\n\n${history}`
+        : "Немає збереженої історії інших сесій для цієї папки (або папка не прикріплена).";
+      break;
+    }
+
+    case "/doctor": {
+      const checks: string[] = [];
+      checks.push(apiKey.apiKey?.trim() ? "✅ API ключ заданий" : "⚠️ API ключ порожній (може бути ок для локальної моделі)");
+      const folders = session.folderPaths ?? [];
+      if (!folders.length) {
+        checks.push("⚠️ Жодної папки проєкту не прикріплено");
+      } else {
+        for (const f of folders) {
+          try {
+            await fs.access(f);
+            checks.push(`✅ Папка існує: ${f}`);
+          } catch {
+            checks.push(`❌ Папку не знайдено на диску: ${f}`);
+          }
+        }
+      }
+      responseText = "Перевірка стану сесії:\n" + checks.join("\n");
+      break;
+    }
+
+    case "/version": {
+      responseText = `Dertet Harness Desktop v${app.getVersion()}`;
+      break;
+    }
+
+    case "/bug": {
+      responseText =
+        "Якщо щось працює не так — опиши проблему в наступному повідомленні (що робив(-ла), що очікував(-ла), " +
+        "що сталось насправді) і, якщо це стосується коду, спробуй /plsfix, щоб агент одразу розібрався і " +
+        "виправив без зайвих уточнень.";
+      break;
+    }
+
     default:
       responseText = "";
   }
@@ -333,6 +593,7 @@ async function handleSlashCommand(
   const respMsg = newMessage(sessionId, "assistant", responseText);
   await store.appendMessage(sessionId, respMsg);
   agentEvents.emit("message_done", { sessionId, message: respMsg });
+  if (refreshSession) agentEvents.emit("session_updated", { sessionId });
   agentEvents.emit("session_idle", { sessionId });
   return true;
 }
@@ -373,12 +634,31 @@ export async function runTurn(
     }
   }
 
-  if (isDertetCode && attachments.length === 0 && (await handleSlashCommand(sessionId, session, apiKey, client, userText))) {
+  if (isDertetCode && attachments.length === 0 && (await handleSlashCommand(sessionId, session, apiKey, client, userText, settings))) {
     return;
+  }
+
+  let plsFixMode = false;
+  if (isDertetCode) {
+    const plsFixMatch = userText.match(/^\s*\/plsfix\b\s*([\s\S]*)$/i);
+    if (plsFixMatch) {
+      plsFixMode = true;
+      userText = plsFixMatch[1].trim() || "Investigate the project deeply and fix whatever is wrong, in the best available way.";
+    }
   }
 
   const priorMessages = await store.loadMessages(sessionId);
   const isFirstMessage = priorMessages.length === 0;
+
+  if (isFirstMessage && !session.title.trim()) {
+    // Show the user's own words immediately instead of a generic "New session" placeholder — the
+    // nicer LLM-generated title (further down, after the first reply completes) replaces this later.
+    const placeholderTitle = userText.trim().slice(0, 60) || session.title;
+    if (placeholderTitle) {
+      await store.updateSession(sessionId, { title: placeholderTitle });
+      agentEvents.emit("session_updated", { sessionId });
+    }
+  }
 
   const userMsg = newMessage(sessionId, "user", userText);
   userMsg.attachments = attachments;
@@ -399,12 +679,13 @@ export async function runTurn(
   let lastAssistantText = "";
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
+  const visitedPages: { url: string; title?: string }[] = [];
 
   try {
     let history = (await store.loadMessages(sessionId)).flatMap(toLlmMessages);
     let steps = 0;
 
-    while (steps < MAX_AGENT_STEPS) {
+    stepLoop: while (steps < MAX_AGENT_STEPS) {
       if (controller.signal.aborted) break;
       steps++;
 
@@ -427,19 +708,25 @@ export async function runTurn(
         memoryNotes: memory.enabled ? memory.notes : [],
         personalizationEnabled: settings.personalizationEnabled,
         userSystemPrompt: settings.systemPrompt,
-        lessons: lessonsStore.lessons
+        lessons: lessonsStore.lessons,
+        plsFixMode
       });
 
       const assistantMsg = newMessage(sessionId, "assistant");
       let buffer = "";
+      let thinkingBuffer = "";
       let toolCalls: ToolCallRecord[] = [];
       let streamError: string | null = null;
       let retryAttempt = 0;
+      const retryLoopStartedAt = Date.now();
 
       for (;;) {
         buffer = "";
+        thinkingBuffer = "";
         toolCalls = [];
         streamError = null;
+        const thinkingActivity: AgentActivity = { kind: "thinking", label: "Думаю…", detailKind: "none" };
+        agentEvents.emit("activity", { sessionId, messageId: assistantMsg.id, activity: thinkingActivity });
         try {
           const gen = client.stream({
             baseUrl: apiKey.baseUrl,
@@ -452,8 +739,16 @@ export async function runTurn(
           });
           for await (const event of withIdleTimeout(gen, IDLE_STREAM_TIMEOUT_MS, controller)) {
             if (event.type === "delta") {
+              if (!buffer) agentEvents.emit("activity", { sessionId, messageId: assistantMsg.id, activity: null });
               buffer += event.text;
               agentEvents.emit("delta", { sessionId, messageId: assistantMsg.id, text: stripMarkersForDisplay(buffer) });
+            } else if (event.type === "thinking_delta") {
+              thinkingBuffer += event.text;
+              agentEvents.emit("activity", {
+                sessionId,
+                messageId: assistantMsg.id,
+                activity: { kind: "thinking", label: "Думаю…", detailKind: "text", detailText: thinkingBuffer }
+              });
             } else if (event.type === "tool_call") {
               toolCalls.push({
                 id: event.call.id,
@@ -473,6 +768,18 @@ export async function runTurn(
         if (!streamError) {
           if (retryAttempt > 0) agentEvents.emit("retry_resolved", { sessionId });
           break;
+        }
+
+        if (Date.now() - retryLoopStartedAt >= WATCHDOG_TIMEOUT_MS) {
+          // Reconnecting hasn't helped for 15 straight minutes — stop silently retrying the identical
+          // failed request and nudge the model forward with a synthetic continuation turn instead,
+          // exactly as if the user had come back and said "keep going."
+          const nudgeMsg = newMessage(sessionId, "user", WATCHDOG_NUDGE_TEXT);
+          await store.appendMessage(sessionId, nudgeMsg);
+          history.push({ role: "user", content: WATCHDOG_NUDGE_TEXT });
+          agentEvents.emit("message_done", { sessionId, message: nudgeMsg });
+          agentEvents.emit("retry_resolved", { sessionId });
+          continue stepLoop;
         }
 
         const delay = RETRY_DELAYS_MS[Math.min(retryAttempt, RETRY_DELAYS_MS.length - 1)];
@@ -611,10 +918,11 @@ export async function runTurn(
         call.status = "running";
         call.startedAt = Date.now();
         agentEvents.emit("tool_call_update", { sessionId, messageId: assistantMsg.id, toolCall: call });
+        agentEvents.emit("activity", { sessionId, messageId: assistantMsg.id, activity: activityForToolCall(call, visitedPages) });
 
         const result = await executeTool(
           { id: call.id, name: call.toolName, args: call.args },
-          { folders: liveFolders }
+          { folders: liveFolders, sessionId, ffmpegPath: settings.ffmpegPath }
         );
 
         call.finishedAt = Date.now();

@@ -12,6 +12,8 @@ export type ProviderId =
   | "deepseek"
   | "perplexity"
   | "cohere"
+  | "ollama"
+  | "lmstudio"
   | "custom";
 export type AgentMode = "default" | "plan" | "auto";
 export type SessionKind = "chat" | "dertet_code";
@@ -42,6 +44,7 @@ export interface Settings {
   systemPrompt: string;
   personalizationEnabled: boolean;
   computerUseAllowed: "ask" | "always" | "never";
+  ffmpegPath?: string;
 }
 
 export interface Attachment {
@@ -100,6 +103,14 @@ export interface UserMemory {
   updatedAt: number;
 }
 
+export interface AgentActivity {
+  kind: "thinking" | "tool" | "browsing";
+  label: string;
+  detailKind: "text" | "urls" | "none";
+  detailText?: string;
+  detailUrls?: { url: string; title?: string }[];
+}
+
 declare global {
   interface Window {
     dertet: {
@@ -147,6 +158,7 @@ declare global {
       };
       on: {
         delta: (cb: (p: { sessionId: string; messageId: string; text: string }) => void) => () => void;
+        activity: (cb: (p: { sessionId: string; messageId: string; activity: AgentActivity | null }) => void) => () => void;
         toolCallUpdate: (cb: (p: { sessionId: string; messageId: string; toolCall: ToolCallRecord }) => void) => () => void;
         messageDone: (cb: (p: { sessionId: string; message: MessageRecord }) => void) => () => void;
         sessionIdle: (cb: (p: { sessionId: string }) => void) => () => void;

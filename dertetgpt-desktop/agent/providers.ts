@@ -250,6 +250,37 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     defaultModel: "command-a-03-2025",
     knownModels: ["command-a-03-2025", "command-r-plus-08-2024", "command-r-08-2024", "command-r7b-12-2024"]
   },
+  ollama: {
+    id: "ollama",
+    displayName: "Ollama (локально)",
+    apiStyle: "openai",
+    defaultBaseUrl: "http://localhost:11434/v1",
+    editableBaseUrl: true,
+    defaultModel: "llama3.3",
+    // Ollama doesn't need a real API key and exposes an OpenAI-compatible /v1/models endpoint that
+    // the model picker's "Оновити список" already queries live — this is just an offline fallback
+    // for whichever popular models the user is likely to have pulled locally.
+    knownModels: [
+      "llama3.3",
+      "llama3.2",
+      "qwen2.5-coder",
+      "qwen3",
+      "deepseek-r1",
+      "mistral",
+      "phi4",
+      "gemma3",
+      "codellama"
+    ]
+  },
+  lmstudio: {
+    id: "lmstudio",
+    displayName: "LM Studio (локально)",
+    apiStyle: "openai",
+    defaultBaseUrl: "http://localhost:1234/v1",
+    editableBaseUrl: true,
+    defaultModel: "",
+    knownModels: []
+  },
   custom: {
     id: "custom",
     displayName: "Custom",

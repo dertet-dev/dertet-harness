@@ -98,6 +98,184 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     requiresApproval: false
   },
   {
+    name: "browser_open",
+    description:
+      "Open a URL in a real rendered browser tab (runs JavaScript, keeps cookies for this session — " +
+      "unlike web_fetch). Use this instead of web_fetch when the page needs JavaScript to render, is " +
+      "paginated/interactive, or when web_fetch returned little/nothing useful. Reuses the tab named " +
+      "tabId across calls (default \"main\") so navigation state and cookies persist.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: { type: "string", description: "Full URL to open" },
+        tabId: { type: "string", description: "Tab name to reuse (optional, default \"main\")" }
+      },
+      required: ["url"]
+    },
+    requiresApproval: false
+  },
+  {
+    name: "browser_read",
+    description:
+      "Read the currently open page in a browser tab. mode \"text\" returns the readable article/body " +
+      "text (paginate long pages with startChar); mode \"links\" returns the page's links; mode " +
+      "\"elements\" returns a numbered list of clickable/typeable elements for use with browser_click " +
+      "and browser_type.",
+    parameters: {
+      type: "object",
+      properties: {
+        tabId: { type: "string", description: "Tab name (optional, default \"main\")" },
+        mode: { type: "string", description: "\"text\", \"links\", or \"elements\" (default \"text\")" },
+        startChar: { type: "number", description: "Start offset for text mode pagination (optional)" },
+        maxChars: { type: "number", description: "Max characters to return for text mode, capped at 6000 (optional)" }
+      },
+      required: []
+    },
+    requiresApproval: false
+  },
+  {
+    name: "browser_find",
+    description: "Search the currently open page for text or a matching element, returning surrounding context.",
+    parameters: {
+      type: "object",
+      properties: {
+        tabId: { type: "string", description: "Tab name (optional, default \"main\")" },
+        query: { type: "string", description: "Text to search for on the page" }
+      },
+      required: ["query"]
+    },
+    requiresApproval: false
+  },
+  {
+    name: "browser_click",
+    description:
+      "Click an element on the currently open page by its index from browser_read(mode=\"elements\"). " +
+      "State-changing (can submit forms, follow links, trigger purchases etc.) — requires approval.",
+    parameters: {
+      type: "object",
+      properties: {
+        tabId: { type: "string", description: "Tab name (optional, default \"main\")" },
+        elementIndex: { type: "number", description: "Element index from browser_read(mode=\"elements\")" }
+      },
+      required: ["elementIndex"]
+    },
+    requiresApproval: true
+  },
+  {
+    name: "browser_type",
+    description:
+      "Type text into an input/textarea on the currently open page by its index from " +
+      "browser_read(mode=\"elements\"). State-changing — requires approval.",
+    parameters: {
+      type: "object",
+      properties: {
+        tabId: { type: "string", description: "Tab name (optional, default \"main\")" },
+        elementIndex: { type: "number", description: "Element index from browser_read(mode=\"elements\")" },
+        text: { type: "string", description: "Text to type" },
+        submit: { type: "string", description: "\"true\" to submit the enclosing form / press Enter after typing (optional)" }
+      },
+      required: ["elementIndex", "text"]
+    },
+    requiresApproval: true
+  },
+  {
+    name: "browser_screenshot",
+    description: "Take a screenshot of the currently open page in a browser tab (visual check, not the user's desktop).",
+    parameters: {
+      type: "object",
+      properties: {
+        tabId: { type: "string", description: "Tab name (optional, default \"main\")" }
+      },
+      required: []
+    },
+    requiresApproval: false
+  },
+  {
+    name: "browser_close",
+    description: "Close a browser tab and free its resources.",
+    parameters: {
+      type: "object",
+      properties: {
+        tabId: { type: "string", description: "Tab name (optional, default \"main\")" }
+      },
+      required: []
+    },
+    requiresApproval: false
+  },
+  {
+    name: "video_probe",
+    description: "Inspect a video/audio/image file (codec, resolution, duration, framerate) before editing it.",
+    parameters: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Absolute or project-relative path to the media file" }
+      },
+      required: ["path"]
+    },
+    requiresApproval: false
+  },
+  {
+    name: "video_add_audio",
+    description: "Add an audio track to a video: replace its audio entirely, mix in on top, or keep both as separate tracks.",
+    parameters: {
+      type: "object",
+      properties: {
+        videoPath: { type: "string", description: "Absolute or project-relative path to the source video" },
+        audioPath: { type: "string", description: "Absolute or project-relative path to the audio file" },
+        outputPath: { type: "string", description: "Absolute or project-relative path for the output video" },
+        mode: { type: "string", description: "\"replace\", \"mix\", or \"keep_both\" (default \"replace\")" }
+      },
+      required: ["videoPath", "audioPath", "outputPath"]
+    },
+    requiresApproval: true
+  },
+  {
+    name: "video_trim",
+    description: "Cut a video down to the [startSeconds, endSeconds] range.",
+    parameters: {
+      type: "object",
+      properties: {
+        videoPath: { type: "string", description: "Absolute or project-relative path to the source video" },
+        startSeconds: { type: "number", description: "Start time in seconds" },
+        endSeconds: { type: "number", description: "End time in seconds" },
+        outputPath: { type: "string", description: "Absolute or project-relative path for the output video" }
+      },
+      required: ["videoPath", "startSeconds", "endSeconds", "outputPath"]
+    },
+    requiresApproval: true
+  },
+  {
+    name: "video_concat",
+    description:
+      "Splice/concatenate multiple video clips into one, in the given order. Clips from different " +
+      "sources are re-encoded and normalized to the first clip's resolution automatically, since raw " +
+      "concatenation silently breaks on mismatched codecs/resolutions.",
+    parameters: {
+      type: "object",
+      properties: {
+        videoPaths: { type: "array", description: "Ordered list of video file paths to concatenate", items: { type: "string" } },
+        outputPath: { type: "string", description: "Absolute or project-relative path for the output video" }
+      },
+      required: ["videoPaths", "outputPath"]
+    },
+    requiresApproval: true
+  },
+  {
+    name: "video_from_images",
+    description: "Assemble a slideshow-style video from a sequence of images, optionally with a background audio track.",
+    parameters: {
+      type: "object",
+      properties: {
+        imagePaths: { type: "array", description: "Ordered list of image file paths", items: { type: "string" } },
+        outputPath: { type: "string", description: "Absolute or project-relative path for the output video" },
+        secondsPerImage: { type: "number", description: "How many seconds each image is shown for" },
+        audioPath: { type: "string", description: "Optional background audio file path" }
+      },
+      required: ["imagePaths", "outputPath", "secondsPerImage"]
+    },
+    requiresApproval: true
+  },
+  {
     name: "update_dertetcode_md",
     description:
       "Update the DertetCode.md file in the project folder with the current project concept, architecture, " +
@@ -205,6 +383,12 @@ export const READ_ONLY_TOOLS = new Set([
   "list_dir",
   "web_search",
   "web_fetch",
+  "browser_open",
+  "browser_read",
+  "browser_find",
+  "browser_screenshot",
+  "browser_close",
+  "video_probe",
   "update_dertetcode_md",
   "ask_user_choice"
 ]);

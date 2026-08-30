@@ -17,6 +17,7 @@ export interface LlmMessage {
 
 export type LlmStreamEvent =
   | { type: "delta"; text: string }
+  | { type: "thinking_delta"; text: string }
   | { type: "tool_call"; call: LlmToolCall }
   | { type: "error"; message: string }
   | { type: "done" };

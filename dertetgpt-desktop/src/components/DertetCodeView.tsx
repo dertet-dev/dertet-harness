@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { AgentMode, MessageRecord, SessionSummary, dertet } from "../api";
 import { MessageBubble } from "./MessageBubble";
+import { AgentStatusLine } from "./AgentStatusLine";
 import { InputBar } from "./InputBar";
 import { ToolCallCard } from "./ToolCallCard";
 import { useSessionChat } from "../hooks/useSessionChat";
@@ -24,6 +25,7 @@ export function DertetCodeView({
   const {
     messages,
     streaming,
+    activity,
     pendingSend,
     errorBanner,
     isSending,
@@ -45,7 +47,7 @@ export function DertetCodeView({
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages, streaming, pendingSend, tab]);
+  }, [messages, streaming, pendingSend, activity, tab]);
 
   function handleSend() {
     if (editingMessageId) {
@@ -116,11 +118,16 @@ export function DertetCodeView({
                 streamingText={streaming.text}
               />
             )}
-            {pendingSend && !streaming && (
-              <MessageBubble
-                message={{ id: "__pending__", sessionId: session.id, role: "assistant", content: "", createdAt: Date.now() }}
-                streamingText=""
-              />
+            {isSending && activity ? (
+              <AgentStatusLine activity={activity} />
+            ) : (
+              pendingSend &&
+              !streaming && (
+                <MessageBubble
+                  message={{ id: "__pending__", sessionId: session.id, role: "assistant", content: "", createdAt: Date.now() }}
+                  streamingText=""
+                />
+              )
             )}
           </div>
         </div>

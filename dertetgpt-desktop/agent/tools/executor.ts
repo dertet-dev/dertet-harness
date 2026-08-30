@@ -10,6 +10,16 @@ import {
   computerKeyTypeTool,
   computerKeyPressTool
 } from "./computerTools";
+import {
+  browserOpenTool,
+  browserReadTool,
+  browserFindTool,
+  browserClickTool,
+  browserTypeTool,
+  browserScreenshotTool,
+  browserCloseTool
+} from "./browserTools";
+import { videoProbeTool, videoAddAudioTool, videoTrimTool, videoConcatTool, videoFromImagesTool } from "./videoTools";
 
 const DEFAULT_TOOL_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes hang protection, per-tool
 
@@ -30,15 +40,22 @@ function withTimeout(promise: Promise<ToolExecutionResult>, ms: number, toolName
   });
 }
 
+const BROWSER_NAV_TIMEOUT_MS = 35_000; // page loads can legitimately take longer than the default tool timeout
+const VIDEO_TIMEOUT_MS = 31 * 60 * 1000; // must exceed videoTools.ts's own RUN_TIMEOUT_MS so ffmpeg's own error wins
+
 export async function executeTool(
   call: ToolCallRequest,
-  ctx: { folders: string[] }
+  ctx: { folders: string[]; sessionId: string; ffmpegPath?: string }
 ): Promise<ToolExecutionResult> {
   const args = call.args as any;
   const timeoutMs =
     call.name === "run_command"
       ? Math.min(args.timeoutSeconds ?? 180, 300) * 1000 + 5000
-      : DEFAULT_TOOL_TIMEOUT_MS;
+      : call.name === "browser_open"
+        ? BROWSER_NAV_TIMEOUT_MS
+        : call.name.startsWith("video_")
+          ? VIDEO_TIMEOUT_MS
+          : DEFAULT_TOOL_TIMEOUT_MS;
 
   const run = (): Promise<ToolExecutionResult> => {
     switch (call.name) {
@@ -68,6 +85,30 @@ export async function executeTool(
         return computerKeyTypeTool(args);
       case "computer_key_press":
         return computerKeyPressTool(args);
+      case "browser_open":
+        return browserOpenTool(ctx.sessionId, args);
+      case "browser_read":
+        return browserReadTool(ctx.sessionId, args);
+      case "browser_find":
+        return browserFindTool(ctx.sessionId, args);
+      case "browser_click":
+        return browserClickTool(ctx.sessionId, args);
+      case "browser_type":
+        return browserTypeTool(ctx.sessionId, args);
+      case "browser_screenshot":
+        return browserScreenshotTool(ctx.sessionId, args);
+      case "browser_close":
+        return browserCloseTool(ctx.sessionId, args);
+      case "video_probe":
+        return videoProbeTool(ctx.ffmpegPath, ctx.folders, args);
+      case "video_add_audio":
+        return videoAddAudioTool(ctx.ffmpegPath, ctx.folders, args);
+      case "video_trim":
+        return videoTrimTool(ctx.ffmpegPath, ctx.folders, args);
+      case "video_concat":
+        return videoConcatTool(ctx.ffmpegPath, ctx.folders, args);
+      case "video_from_images":
+        return videoFromImagesTool(ctx.ffmpegPath, ctx.folders, args);
       default:
         return Promise.resolve({ ok: false, output: `Невідомий інструмент: ${call.name}` });
     }

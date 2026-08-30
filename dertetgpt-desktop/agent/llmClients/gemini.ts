@@ -98,7 +98,13 @@ export const geminiClient: LlmClient = {
         for (const part of parts) {
           if (typeof part.text === "string" && part.text.length) {
             gotAny = true;
-            yield { type: "delta", text: part.text };
+            // Passive parsing — never requested via generationConfig.thinkingConfig, so this only ever
+            // fires on models that include thought parts by default (some 2.5+/3 reasoning models do).
+            if (part.thought === true) {
+              yield { type: "thinking_delta", text: part.text };
+            } else {
+              yield { type: "delta", text: part.text };
+            }
           }
           if (part.functionCall?.name) {
             gotAny = true;

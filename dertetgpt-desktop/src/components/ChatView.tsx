@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { MessageRecord, SessionSummary } from "../api";
 import { MessageBubble } from "./MessageBubble";
+import { AgentStatusLine } from "./AgentStatusLine";
 import { InputBar } from "./InputBar";
 import { ToolCallCard } from "./ToolCallCard";
 import { useSessionChat } from "../hooks/useSessionChat";
@@ -14,6 +15,7 @@ export function ChatView({ session, onOpenSettings }: { session: SessionSummary;
   const {
     messages,
     streaming,
+    activity,
     pendingSend,
     errorBanner,
     isSending,
@@ -34,7 +36,7 @@ export function ChatView({ session, onOpenSettings }: { session: SessionSummary;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages, streaming, pendingSend]);
+  }, [messages, streaming, pendingSend, activity]);
 
   function handleSend() {
     if (editingMessageId) {
@@ -80,11 +82,16 @@ export function ChatView({ session, onOpenSettings }: { session: SessionSummary;
               streamingText={streaming.text}
             />
           )}
-          {pendingSend && !streaming && (
-            <MessageBubble
-              message={{ id: "__pending__", sessionId: session.id, role: "assistant", content: "", createdAt: Date.now() }}
-              streamingText=""
-            />
+          {isSending && activity ? (
+            <AgentStatusLine activity={activity} />
+          ) : (
+            pendingSend &&
+            !streaming && (
+              <MessageBubble
+                message={{ id: "__pending__", sessionId: session.id, role: "assistant", content: "", createdAt: Date.now() }}
+                streamingText=""
+              />
+            )
           )}
         </div>
       </div>

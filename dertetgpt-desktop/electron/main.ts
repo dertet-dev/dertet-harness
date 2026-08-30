@@ -5,6 +5,7 @@ import * as store from "../agent/store";
 import { fetchAvailableModels } from "../agent/llmClients/modelsApi";
 import { providerList, PROVIDERS } from "../agent/providers";
 import { agentEvents, runTurn, stopSession, approveToolCall, respondComputerUsePermission, respondChoice, isSessionActive } from "../agent/agentLoop";
+import { destroyAllForSession } from "../agent/browser/browserPool";
 import { ApiKeyEntry, Attachment, SessionKind } from "../agent/types";
 
 let mainWindow: BrowserWindow | null = null;
@@ -106,7 +107,10 @@ ipcMain.handle(
   async (_e, kind: SessionKind, apiKeyId: string, folderPaths: string[], title: string) =>
     store.createSession(kind, apiKeyId, folderPaths, title)
 );
-ipcMain.handle("sessions:delete", (_e, id: string) => store.deleteSession(id));
+ipcMain.handle("sessions:delete", (_e, id: string) => {
+  destroyAllForSession(id);
+  return store.deleteSession(id);
+});
 ipcMain.handle("sessions:setMode", (_e, id: string, mode: string) => store.updateSession(id, { mode: mode as any }));
 ipcMain.handle("sessions:addFolder", (_e, id: string, folder: string) => store.addFolderToSession(id, folder));
 ipcMain.handle("sessions:removeFolder", (_e, id: string, folder: string) => store.removeFolderFromSession(id, folder));
@@ -148,6 +152,7 @@ ipcMain.handle("chat:isActive", (_e, sessionId: string) => isSessionActive(sessi
 // forward agent events to renderer
 const forwardedEvents = [
   "delta",
+  "activity",
   "tool_call_update",
   "message_done",
   "session_idle",

@@ -16,6 +16,9 @@ import com.dertet.gpt.network.ChatStreamEvent
 import com.dertet.gpt.util.WebSearchService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,11 +30,18 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.util.UUID
 
 private val rememberRegex = Regex("""\[\[REMEMBER:\s*(.+?)\s*]]""", RegexOption.DOT_MATCHES_ALL)
 private val searchRegex = Regex("""\[\[SEARCH:\s*(.+?)\s*]]""", RegexOption.DOT_MATCHES_ALL)
 private const val MAX_SEARCH_ROUNDS = 1
+
+// OkHttp's read/call timeouts are deliberately 0 (unlimited) to allow long, legitimately-quiet SSE
+// streams — but that means a truly stalled connection (server accepts, then goes silent forever)
+// would otherwise hang collect{} forever. Since _streaming is a single app-wide flag, that would
+// permanently block sending in every chat, not just the stuck one, until the app is force-restarted.
+private const val IDLE_STREAM_TIMEOUT_MS = 60_000L
 
 private const val MEMORY_INSTRUCTION = "If you learn a durable fact about the user worth " +
     "remembering for future conversations (name, preferences, occupation, ongoing context, etc.), " +
@@ -305,26 +315,41 @@ class ChatViewModel(private val container: AppContainer) : ViewModel() {
             val systemPrompt = buildEffectiveSystemPrompt(settings)
 
             try {
-                repo.streamAssistantReply(
-                    apiStyle = settings.provider.apiStyle,
-                    baseUrl = settings.baseUrl,
-                    apiKey = settings.apiKey,
-                    model = settings.model,
-                    systemPrompt = systemPrompt,
-                    history = history
-                ).collect { event ->
-                    when (event) {
-                        is ChatStreamEvent.Delta -> {
-                            sb.append(event.text)
-                            _streaming.value = StreamingState(assistantId, stripForDisplay(sb.toString()), pendingImage)
+                val lastEventAt = java.util.concurrent.atomic.AtomicLong(System.currentTimeMillis())
+                coroutineScope {
+                    val watchdog = launch {
+                        while (isActive) {
+                            delay(5_000)
+                            if (System.currentTimeMillis() - lastEventAt.get() > IDLE_STREAM_TIMEOUT_MS) {
+                                throw IOException(
+                                    "Немає відповіді від моделі понад ${IDLE_STREAM_TIMEOUT_MS / 1000}с — з'єднання перервано."
+                                )
+                            }
                         }
-                        is ChatStreamEvent.ImageGenerated -> {
-                            pendingImage = GeneratedImage(event.mimeType, event.base64Data)
-                            _streaming.value = StreamingState(assistantId, stripForDisplay(sb.toString()), pendingImage)
-                        }
-                        is ChatStreamEvent.Error -> roundError = event.message
-                        ChatStreamEvent.Done -> Unit
                     }
+                    repo.streamAssistantReply(
+                        apiStyle = settings.provider.apiStyle,
+                        baseUrl = settings.baseUrl,
+                        apiKey = settings.apiKey,
+                        model = settings.model,
+                        systemPrompt = systemPrompt,
+                        history = history
+                    ).collect { event ->
+                        lastEventAt.set(System.currentTimeMillis())
+                        when (event) {
+                            is ChatStreamEvent.Delta -> {
+                                sb.append(event.text)
+                                _streaming.value = StreamingState(assistantId, stripForDisplay(sb.toString()), pendingImage)
+                            }
+                            is ChatStreamEvent.ImageGenerated -> {
+                                pendingImage = GeneratedImage(event.mimeType, event.base64Data)
+                                _streaming.value = StreamingState(assistantId, stripForDisplay(sb.toString()), pendingImage)
+                            }
+                            is ChatStreamEvent.Error -> roundError = event.message
+                            ChatStreamEvent.Done -> Unit
+                        }
+                    }
+                    watchdog.cancel()
                 }
             } catch (e: CancellationException) {
                 throw e

@@ -12,6 +12,8 @@ export type ProviderId =
   | "deepseek"
   | "perplexity"
   | "cohere"
+  | "ollama"
+  | "lmstudio"
   | "custom";
 export type ApiStyle = "openai" | "anthropic" | "gemini";
 export type AgentMode = "default" | "plan" | "auto";
@@ -43,6 +45,7 @@ export interface Settings {
   systemPrompt: string;
   personalizationEnabled: boolean;
   computerUseAllowed: "ask" | "always" | "never";
+  ffmpegPath?: string;
 }
 
 export interface Attachment {
@@ -102,6 +105,14 @@ export interface UserMemory {
 export interface AgentLessons {
   lessons: string[]; // short root-caused mistakes to avoid repeating, newest last
   updatedAt: number;
+}
+
+export interface AgentActivity {
+  kind: "thinking" | "tool" | "browsing";
+  label: string;
+  detailKind: "text" | "urls" | "none";
+  detailText?: string;
+  detailUrls?: { url: string; title?: string }[];
 }
 
 export interface ChoiceQuestion {
