@@ -18,6 +18,14 @@ export function useSessionChat(sessionId: string) {
       .then((msgs) => {
         if (!cancelled) setMessages(msgs);
       });
+    // A turn started before this chat was last opened may still be running in the background (e.g. mid
+    // retry-wait) — without this, reopening the chat would show "not sending" even though it actually is,
+    // which is exactly what let a second message get sent on top of a still-running one.
+    dertet()
+      .chat.isActive(sessionId)
+      .then((active) => {
+        if (!cancelled && active) setTurnActive(true);
+      });
 
     const offDelta = dertet().on.delta((p) => {
       if (p.sessionId !== sessionId) return;

@@ -137,7 +137,7 @@ export function DertetCodeView({
       )}
 
       {errorBanner && <div className="no-key-banner">⚠️ {errorBanner}</div>}
-      {retryStatus && tab === "chat" && (
+      {retryStatus && (
         <div className="no-key-banner retry-banner">
           ⏳ {t("retrying", String(Math.round(retryStatus.delayMs / 1000)), String(retryStatus.attempt))}
         </div>

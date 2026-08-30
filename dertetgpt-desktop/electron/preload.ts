@@ -51,7 +51,8 @@ contextBridge.exposeInMainWorld("dertet", {
     approveToolCall: (toolCallId: string, approved: boolean) => invoke("chat:approveToolCall", toolCallId, approved),
     respondComputerUsePermission: (requestId: string, allow: boolean, remember: boolean) =>
       invoke("chat:respondComputerUsePermission", requestId, allow, remember),
-    respondChoice: (requestId: string, answer: string) => invoke("chat:respondChoice", requestId, answer)
+    respondChoice: (requestId: string, answer: string) => invoke("chat:respondChoice", requestId, answer),
+    isActive: (sessionId: string) => invoke("chat:isActive", sessionId)
   },
   on: {
     delta: (cb: (p: any) => void) => on("agent:delta", cb),

@@ -143,6 +143,7 @@ declare global {
         approveToolCall: (toolCallId: string, approved: boolean) => Promise<void>;
         respondComputerUsePermission: (requestId: string, allow: boolean, remember: boolean) => Promise<void>;
         respondChoice: (requestId: string, answer: string) => Promise<void>;
+        isActive: (sessionId: string) => Promise<boolean>;
       };
       on: {
         delta: (cb: (p: { sessionId: string; messageId: string; text: string }) => void) => () => void;

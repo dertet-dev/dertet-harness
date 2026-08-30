@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import * as store from "../agent/store";
 import { fetchAvailableModels } from "../agent/llmClients/modelsApi";
 import { providerList, PROVIDERS } from "../agent/providers";
-import { agentEvents, runTurn, stopSession, approveToolCall, respondComputerUsePermission, respondChoice } from "../agent/agentLoop";
+import { agentEvents, runTurn, stopSession, approveToolCall, respondComputerUsePermission, respondChoice, isSessionActive } from "../agent/agentLoop";
 import { ApiKeyEntry, Attachment, SessionKind } from "../agent/types";
 
 let mainWindow: BrowserWindow | null = null;
@@ -143,6 +143,7 @@ ipcMain.handle("chat:respondComputerUsePermission", (_e, requestId: string, allo
   respondComputerUsePermission(requestId, allow, remember)
 );
 ipcMain.handle("chat:respondChoice", (_e, requestId: string, answer: string) => respondChoice(requestId, answer));
+ipcMain.handle("chat:isActive", (_e, sessionId: string) => isSessionActive(sessionId));
 
 // forward agent events to renderer
 const forwardedEvents = [
@@ -159,6 +160,12 @@ const forwardedEvents = [
 ];
 for (const evt of forwardedEvents) {
   agentEvents.on(evt, (payload) => {
-    mainWindow?.webContents.send(`agent:${evt}`, payload);
+    // A turn can keep emitting events after the window starts closing (agentLoop's async work isn't
+    // tied to window lifecycle) — sending on destroyed webContents throws, and since this runs inside
+    // a plain EventEmitter callback, an uncaught throw here would break delivery to any other listener
+    // still queued for this same event.
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+      mainWindow.webContents.send(`agent:${evt}`, payload);
+    }
   });
 }

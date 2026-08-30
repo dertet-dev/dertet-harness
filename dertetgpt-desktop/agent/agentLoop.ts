@@ -54,6 +54,10 @@ export function stopSession(sessionId: string): void {
   activeControllers.get(sessionId)?.abort();
 }
 
+export function isSessionActive(sessionId: string): boolean {
+  return activeControllers.has(sessionId);
+}
+
 async function cancellableSleep(ms: number, controller: AbortController): Promise<void> {
   if (controller.signal.aborted) return;
   await new Promise<void>((resolve) => {
@@ -92,30 +96,65 @@ function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
-async function requestToolApproval(sessionId: string, messageId: string, toolCall: ToolCallRecord): Promise<boolean> {
+/**
+ * All three "ask the UI something and await the answer" helpers below take the turn's
+ * AbortController and race the wait against it. Without this, aborting a turn (Stop button,
+ * or the new-message-supersedes-old-one guard in runTurn) does nothing for a run that's
+ * currently blocked on one of these — the promise only resolves when the matching respond*()
+ * function is called, so an aborted-but-still-waiting run would hang forever: never reaches
+ * its `finally`, never frees activeControllers, and the pending-map entry leaks permanently.
+ */
+async function requestToolApproval(
+  sessionId: string,
+  messageId: string,
+  toolCall: ToolCallRecord,
+  controller: AbortController
+): Promise<boolean> {
   agentEvents.emit("tool_call_update", { sessionId, messageId, toolCall });
   return new Promise((resolve) => {
-    pendingApprovals.set(toolCall.id, resolve);
+    const onAbort = () => {
+      pendingApprovals.delete(toolCall.id);
+      resolve(false);
+    };
+    pendingApprovals.set(toolCall.id, (approved) => {
+      controller.signal.removeEventListener("abort", onAbort);
+      resolve(approved);
+    });
+    controller.signal.addEventListener("abort", onAbort, { once: true });
   });
 }
 
-async function requestComputerUsePermission(sessionId: string): Promise<boolean> {
+async function requestComputerUsePermission(sessionId: string, controller: AbortController): Promise<boolean> {
   if (computerUseGrantedThisRun) return true;
   const requestId = randomUUID();
   agentEvents.emit("computer_use_permission_request", { sessionId, requestId });
   return new Promise((resolve) => {
+    const onAbort = () => {
+      pendingComputerUsePermission.delete(requestId);
+      resolve(false);
+    };
     pendingComputerUsePermission.set(requestId, (allow, remember) => {
+      controller.signal.removeEventListener("abort", onAbort);
       if (allow && remember) computerUseGrantedThisRun = true;
       resolve(allow);
     });
+    controller.signal.addEventListener("abort", onAbort, { once: true });
   });
 }
 
-async function requestChoice(sessionId: string, question: ChoiceQuestion): Promise<string> {
+async function requestChoice(sessionId: string, question: ChoiceQuestion, controller: AbortController): Promise<string> {
   const requestId = randomUUID();
   agentEvents.emit("choice_request", { sessionId, requestId, question });
   return new Promise((resolve) => {
-    pendingChoiceResponses.set(requestId, resolve);
+    const onAbort = () => {
+      pendingChoiceResponses.delete(requestId);
+      resolve("(stopped)");
+    };
+    pendingChoiceResponses.set(requestId, (answer) => {
+      controller.signal.removeEventListener("abort", onAbort);
+      resolve(answer);
+    });
+    controller.signal.addEventListener("abort", onAbort, { once: true });
   });
 }
 
@@ -319,6 +358,21 @@ export async function runTurn(
   const client = clientForStyle(provider.apiStyle);
   const isDertetCode = session.kind === "dertet_code";
 
+  // A previous turn for this exact session might still be running (e.g. stuck in a retry wait) if the
+  // UI's local "is this session busy" state ever gets out of sync with the real server-side state —
+  // switching sessions and back recreates that state from scratch. Without this guard, calling runTurn()
+  // again here would silently orphan the old run: two concurrent executions would both append messages
+  // and emit events for the same session, racing each other and making the whole session look stuck.
+  // So a new message always wins — abort whatever was still in flight and wait for it to actually stop
+  // before touching this session's history.
+  if (activeControllers.has(sessionId)) {
+    activeControllers.get(sessionId)?.abort();
+    const start = Date.now();
+    while (activeControllers.has(sessionId) && Date.now() - start < 5000) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+
   if (isDertetCode && attachments.length === 0 && (await handleSlashCommand(sessionId, session, apiKey, client, userText))) {
     return;
   }
@@ -468,7 +522,7 @@ export async function runTurn(
       let choiceHandledThisStep = false;
       if (!isDertetCode && !streamError && choice) {
         choiceHandledThisStep = true;
-        const answer = await requestChoice(sessionId, choice);
+        const answer = await requestChoice(sessionId, choice, controller);
         if (!controller.signal.aborted) {
           const answerMsg = newMessage(sessionId, "user", answer);
           await store.appendMessage(sessionId, answerMsg);
@@ -498,7 +552,7 @@ export async function runTurn(
           };
           call.status = "running";
           agentEvents.emit("tool_call_update", { sessionId, messageId: assistantMsg.id, toolCall: call });
-          const answer = await requestChoice(sessionId, question);
+          const answer = await requestChoice(sessionId, question, controller);
           call.status = "done";
           call.resultSummary = answer;
           agentEvents.emit("tool_call_update", { sessionId, messageId: assistantMsg.id, toolCall: call });
@@ -515,7 +569,7 @@ export async function runTurn(
         }
 
         if (COMPUTER_USE_TOOLS.has(call.toolName) && settings.computerUseAllowed !== "always") {
-          const allowed = await requestComputerUsePermission(sessionId);
+          const allowed = await requestComputerUsePermission(sessionId, controller);
           if (!allowed) {
             call.status = "denied";
             call.resultSummary = "Користувач не надав дозвіл на керування комп'ютером.";
@@ -544,7 +598,7 @@ export async function runTurn(
 
         if (needsApproval) {
           call.status = "pending_approval";
-          const approved = await requestToolApproval(sessionId, assistantMsg.id, call);
+          const approved = await requestToolApproval(sessionId, assistantMsg.id, call, controller);
           if (!approved) {
             call.status = "denied";
             call.resultSummary = "Відхилено користувачем.";

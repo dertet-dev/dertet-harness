@@ -16,6 +16,22 @@ async function ensureDirs(): Promise<void> {
   await fs.mkdir(sessionsDir(), { recursive: true });
 }
 
+/**
+ * Every "read whole file, mutate in memory, write whole file back" function below shares this
+ * per-key lock. Without it, two concurrent calls touching the same file (e.g. a turn's own
+ * touchSession() in its `finally` racing a user action like adding a folder, or two sessions'
+ * index updates landing at once) would both read the same starting state and the later write
+ * would silently clobber the earlier one — a classic lost-update bug that looks like "my change
+ * just didn't happen" rather than a crash.
+ */
+const fileLocks = new Map<string, Promise<unknown>>();
+function withFileLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const prior = fileLocks.get(key) ?? Promise.resolve();
+  const run = prior.then(fn, fn);
+  fileLocks.set(key, run.then(() => undefined, () => undefined));
+  return run;
+}
+
 async function readJson<T>(file: string, fallback: T): Promise<T> {
   try {
     const raw = await fs.readFile(file, "utf-8");
@@ -64,6 +80,8 @@ async function saveSessionIndex(list: SessionSummary[]): Promise<void> {
   await writeJson(path.join(sessionsDir(), "index.json"), list);
 }
 
+const SESSIONS_INDEX_LOCK = "sessions-index";
+
 export async function createSession(
   kind: SessionKind,
   apiKeyId: string,
@@ -82,27 +100,33 @@ export async function createSession(
     folderPaths,
     mode: "default"
   };
-  const list = await listSessions();
-  list.unshift(session);
-  await saveSessionIndex(list);
+  await withFileLock(SESSIONS_INDEX_LOCK, async () => {
+    const list = await listSessions();
+    list.unshift(session);
+    await saveSessionIndex(list);
+  });
   await writeJson(messagesFile(session.id), []);
   return session;
 }
 
 export async function addFolderToSession(id: string, folder: string): Promise<void> {
-  const list = await listSessions();
-  const session = list.find((s) => s.id === id);
-  if (!session) return;
-  if (!session.folderPaths.includes(folder)) session.folderPaths.push(folder);
-  await saveSessionIndex(list);
+  await withFileLock(SESSIONS_INDEX_LOCK, async () => {
+    const list = await listSessions();
+    const session = list.find((s) => s.id === id);
+    if (!session) return;
+    if (!session.folderPaths.includes(folder)) session.folderPaths.push(folder);
+    await saveSessionIndex(list);
+  });
 }
 
 export async function removeFolderFromSession(id: string, folder: string): Promise<void> {
-  const list = await listSessions();
-  const session = list.find((s) => s.id === id);
-  if (!session) return;
-  session.folderPaths = session.folderPaths.filter((f) => f !== folder);
-  await saveSessionIndex(list);
+  await withFileLock(SESSIONS_INDEX_LOCK, async () => {
+    const list = await listSessions();
+    const session = list.find((s) => s.id === id);
+    if (!session) return;
+    session.folderPaths = session.folderPaths.filter((f) => f !== folder);
+    await saveSessionIndex(list);
+  });
 }
 
 function messagesFile(sessionId: string): string {
@@ -110,19 +134,23 @@ function messagesFile(sessionId: string): string {
 }
 
 export async function deleteSession(id: string): Promise<void> {
-  const list = (await listSessions()).filter((s) => s.id !== id);
-  await saveSessionIndex(list);
+  await withFileLock(SESSIONS_INDEX_LOCK, async () => {
+    const list = (await listSessions()).filter((s) => s.id !== id);
+    await saveSessionIndex(list);
+  });
   try {
     await fs.unlink(messagesFile(id));
   } catch {}
 }
 
 export async function updateSession(id: string, patch: Partial<SessionSummary>): Promise<void> {
-  const list = await listSessions();
-  const idx = list.findIndex((s) => s.id === id);
-  if (idx < 0) return;
-  list[idx] = { ...list[idx], ...patch, updatedAt: Date.now() };
-  await saveSessionIndex(list);
+  await withFileLock(SESSIONS_INDEX_LOCK, async () => {
+    const list = await listSessions();
+    const idx = list.findIndex((s) => s.id === id);
+    if (idx < 0) return;
+    list[idx] = { ...list[idx], ...patch, updatedAt: Date.now() };
+    await saveSessionIndex(list);
+  });
 }
 
 export async function touchSession(id: string): Promise<void> {
@@ -138,24 +166,30 @@ export async function saveMessages(sessionId: string, messages: MessageRecord[])
 }
 
 export async function appendMessage(sessionId: string, message: MessageRecord): Promise<void> {
-  const messages = await loadMessages(sessionId);
-  messages.push(message);
-  await saveMessages(sessionId, messages);
+  await withFileLock(messagesFile(sessionId), async () => {
+    const messages = await loadMessages(sessionId);
+    messages.push(message);
+    await saveMessages(sessionId, messages);
+  });
 }
 
 export async function upsertMessage(sessionId: string, message: MessageRecord): Promise<void> {
-  const messages = await loadMessages(sessionId);
-  const idx = messages.findIndex((m) => m.id === message.id);
-  if (idx >= 0) messages[idx] = message;
-  else messages.push(message);
-  await saveMessages(sessionId, messages);
+  await withFileLock(messagesFile(sessionId), async () => {
+    const messages = await loadMessages(sessionId);
+    const idx = messages.findIndex((m) => m.id === message.id);
+    if (idx >= 0) messages[idx] = message;
+    else messages.push(message);
+    await saveMessages(sessionId, messages);
+  });
 }
 
 export async function deleteMessagesFrom(sessionId: string, fromMessageId: string): Promise<void> {
-  const messages = await loadMessages(sessionId);
-  const idx = messages.findIndex((m) => m.id === fromMessageId);
-  if (idx < 0) return;
-  await saveMessages(sessionId, messages.slice(0, idx));
+  await withFileLock(messagesFile(sessionId), async () => {
+    const messages = await loadMessages(sessionId);
+    const idx = messages.findIndex((m) => m.id === fromMessageId);
+    if (idx < 0) return;
+    await saveMessages(sessionId, messages.slice(0, idx));
+  });
 }
 
 const DEFAULT_MEMORY: UserMemory = { enabled: true, notes: [], updatedAt: 0 };
@@ -209,12 +243,14 @@ export async function recordDertetCodeActivity(): Promise<DertetCodeStreak> {
 }
 
 export async function addSessionUsage(sessionId: string, inputTokens: number, outputTokens: number): Promise<void> {
-  const list = await listSessions();
-  const session = list.find((s) => s.id === sessionId);
-  if (!session) return;
-  const usage = session.usage ?? { inputTokens: 0, outputTokens: 0 };
-  usage.inputTokens += inputTokens;
-  usage.outputTokens += outputTokens;
-  session.usage = usage;
-  await saveSessionIndex(list);
+  await withFileLock(SESSIONS_INDEX_LOCK, async () => {
+    const list = await listSessions();
+    const session = list.find((s) => s.id === sessionId);
+    if (!session) return;
+    const usage = session.usage ?? { inputTokens: 0, outputTokens: 0 };
+    usage.inputTokens += inputTokens;
+    usage.outputTokens += outputTokens;
+    session.usage = usage;
+    await saveSessionIndex(list);
+  });
 }
