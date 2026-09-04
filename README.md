@@ -53,7 +53,7 @@ This is the desktop-only agent harness, and it's the reason the project exists i
 
 ## Getting the app
 
-- **Windows:** grab the installer from [`dertet-harness-desktop/release/`](dertet-harness-desktop/release/) or build it yourself — see below.
+- **Windows:** grab the installer from the [latest release](https://github.com/dertet-dev/dertet-harness/releases/latest) or build it yourself — see below.
 - **Android:** build from source (no Play Store listing yet).
 - **iOS:** source only for now — see [`dertet-harness-ios/README.md`](dertet-harness-ios/README.md) for the Xcode setup, since there's no signed build to distribute without an Apple developer account.
 
